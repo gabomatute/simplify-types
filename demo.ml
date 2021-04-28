@@ -17,10 +17,12 @@ type exp = V of name
 type path = Val
   | Dot of path * name
 
-type number = N of int
-  | Times of int * number
-  | Plus of number * number
-  | Len of path
+type number =
+  (path option * int) list
+let const c : number =
+  [(None, c)]
+let lens cs : number =
+  List.map (fun (c, p) -> (Some p, c)) cs
 
 type formula =
   | False | True
@@ -33,6 +35,15 @@ type refine = RVoid
   | RLst of refine
   | Refine of refine * formula
 
+let assoc_update f k = 
+  List.map (fun (ki, v) -> (ki, if k = ki then f v else v))
+
+let add (n: number) : number -> number =
+  List.fold_left (fun n (p, c) -> assoc_update ((+) c) p n) n
+
+let mult c : number -> number =
+  List.map (fun (p, ci) -> (p, c * ci))
+
 let rec tselect t = function
   | Dot(p, x) -> let Prod ts = tselect t p in List.assoc x ts
   | Val -> t
@@ -42,50 +53,33 @@ let rec eselect e = function
   | Val -> e
 
 let rec slen = function
-  | V "val" -> Len Val
+  | Nil -> const 1 | Cons(e1, e2) -> add (const 1) (slen e2)
   | Proj((x, e)) -> slen (eselect e (Dot(Val, x)))
-  | Nil -> N 0 | Cons(e1, e2) -> Plus((N 1), (slen e2))
-  | Append(e1, e2) -> Plus((slen e1), (slen e2))
-  | Flatten(c, e) -> Times(c, slen e)
+  | Append(e1, e2) -> add (slen e1) (slen e2)
+  | Flatten(c, e) -> mult c (slen e)
   | Map((x, e1), e2) -> slen e2
+  | V "val" -> lens [1, Val]
   | _ -> assert false
 
-let rec nrewrite i = function
-  | Times(c, n) -> Times(c, nrewrite i n)
-  | Plus(n1, n2) -> Plus(nrewrite i n1, nrewrite i n2)
-  | Len p -> slen (eselect (i (V "val")) p)
-  | N c -> N c
+let rec nrewrite i n =
+  let ebody = i (V "val") in
+  let e' p = eselect ebody p in
+  let n' = function
+    | None, c0 -> const c0
+    | Some p, c -> mult c (slen (e' p)) in
+  List.fold_left add (const 0) (List.map n' n)
 
 let rec frewrite i = function
   | (False | True) as phi -> phi
   | Or(phi1, phi2) -> Or(frewrite i phi1, frewrite i phi2)
   | LEq(n1, n2) -> LEq(nrewrite i n1, nrewrite i n2)
 
-type coeff = path option * int
-
-let rearrange (LEq(l, r)) : coeff list * coeff list =
-  let cmult k =
-    List.map (fun (p, c) -> (p, k * c)) in
-  let rec coeffs = function
-    | Times(c, n) -> cmult c (coeffs n)
-    | Plus(n1, n2) -> coeffs n1 @ coeffs n2
-    | Len p -> [(Some p, 1)]
-    | N c -> [(None, c)] in
-  let extract p =
-    List.partition_map begin function
-      | pi, ci when pi = p -> Either.Left ci
-      | pi, ci -> Either.Right (pi, ci)
-    end in
-  let rec collapse = function
-    | (p, c)::rest -> let cs, remain = extract p rest in
-      (p, List.fold_left (+) c cs) :: collapse remain
-    | [] -> [] in
-  let eqsplit =
-    List.partition_map begin function
-      | pi, ci when ci > 0 -> Either.Left (pi, ci)
-      | pi, ci -> Either.Right (pi, -ci)
-    end in
-  eqsplit (collapse ((coeffs l) @ (cmult (-1) (coeffs r))))
+let rearrange ((l, r): number * number) : number * number =
+  let eqsplit = List.partition_map begin function
+    | pi, ci when ci > 0 -> Either.Left (pi, ci)
+    | pi, ci -> Either.Right (pi, -ci)
+  end in
+  eqsplit (add l (mult (-1) r))
 
 let rec simplify = function
   | RSum(rt1, rt2) ->
@@ -110,7 +104,7 @@ let rec simplify = function
   | Refine (rt, LEq(n1, n2)) ->
     let i, t = simplify rt in
     let LEq(n1, n2) = frewrite i (LEq(n1, n2)) in
-    let nu, nv = rearrange (LEq(n1, n2)) in
+    let nu, nv = rearrange (n1, n2) in
     (??)
   | Refine(_, False) | RVoid ->
     let i v = assert false in
@@ -132,11 +126,11 @@ let rec spath = function
   | Dot(p, x) -> spath p ^ "." ^ x
   | Val -> "val"
 
-let rec snumber = function
-  | N c -> string_of_int c
-  | Times (c, n) -> string_of_int c ^ "(" ^ snumber n  ^ ")"
-  | Plus (l, r) -> snumber l ^ " + " ^ snumber r
-  | Len p -> "len " ^ spath p
+let snumber (n: number) =
+  let spc (p, c) = string_of_int c ^ match p with
+    | Some p -> "len " ^ spath p
+    | None -> "" in
+  String.concat " + " (List.map spc n)
 
 let rec sformula = function
   | False -> "F" | True -> "T"
