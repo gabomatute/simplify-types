@@ -9,10 +9,10 @@ type simple = Void
 type exp = V of name
   | L of exp | R of exp
   | Case of exp * (name * exp) * (name * exp)
-  | Tuple of (name * exp) list
-  | Proj of (name * exp)
-  | Nil | Cons of exp * exp | Append of exp * exp
-  | Map of (name * exp) * exp | Flatten of int * exp
+  | Tuple of (name * exp) list | Proj of (name * exp)
+  | Nil | Cons of exp * exp
+  | Append of exp * exp | Flatten of int * exp
+  | Map of (name * exp) * exp
 
 type path = Val
   | Dot of path * name
@@ -58,8 +58,8 @@ let rec eselect e = function
   | Val -> e
 
 let rec slen = function
-  | Nil -> const 1 | Cons(e1, e2) -> add (const 1) (slen e2)
   | Proj((x, e)) -> slen (eselect e (Dot(Val, x)))
+  | Nil -> const 1 | Cons(e1, e2) -> add (const 1) (slen e2)
   | Append(e1, e2) -> add (slen e1) (slen e2)
   | Flatten(c, e) -> mult c (slen e)
   | Map((x, e1), e2) -> slen e2
@@ -106,11 +106,14 @@ let rec simplify = function
     let i2, t2 = simplify (Refine(t, phi2)) in
     let i v = Case(v, ("x1", i1(V "x1")), ("x2", i2(V "x2"))) in
     (i, Sum(t1, t2))
-  | Refine (rt, LEq(n1, n2)) ->
+  | Refine (rt, (LEq(n1, n2) as phi)) ->
     let i, t = simplify rt in
-    let LEq(n1, n2) = frewrite i (LEq(n1, n2)) in
-    let nu, nv = rearrange (n1, n2) in
-    (??)
+    begin match frewrite i phi with
+      | LEq(n1, n2) ->
+        let nu, nv = rearrange (n1, n2) in
+        (??)
+      | _ -> assert false
+      end
   | Refine(_, False) | RVoid ->
     let i v = assert false in
     (i, Void)
