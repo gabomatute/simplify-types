@@ -10,7 +10,6 @@ type exp = V of name
   | L of exp | R of exp
   | Case of exp * (name * exp) * (name * exp)
   | Tuple of (name * exp) list | Proj of (name * exp)
-  | Nil | Cons of exp * exp
   | Append of exp * exp | Flatten of int * exp
   | Map of (name * exp) * exp
 
@@ -18,11 +17,9 @@ type path = Val
   | Dot of path * name
 
 type number =
-  (path option * int) list
-let const c : number =
-  [(None, c)]
+  (path * int) list
 let lens cs : number =
-  List.map (fun (c, p) -> (Some p, c)) cs
+  List.map (fun (c, p) -> (p, c)) cs
 
 type formula =
   | False | True
@@ -59,7 +56,6 @@ let rec eselect e = function
 
 let rec slen = function
   | Proj((x, e)) -> slen (eselect e (Dot(Val, x)))
-  | Nil -> const 1 | Cons(e1, e2) -> add (const 1) (slen e2)
   | Append(e1, e2) -> add (slen e1) (slen e2)
   | Flatten(c, e) -> mult c (slen e)
   | Map((x, e1), e2) -> slen e2
@@ -70,9 +66,8 @@ let rec nrewrite i n =
   let ebody = i (V "val") in
   let e' p = eselect ebody p in
   let n' = function
-    | None, c0 -> const c0
-    | Some p, c -> mult c (slen (e' p)) in
-  List.fold_left add (const 0) (List.map n' n)
+    | p, c -> mult c (slen (e' p)) in
+  List.fold_left add [] (List.map n' n)
 
 let rec frewrite i = function
   | (False | True) as phi -> phi
@@ -136,8 +131,7 @@ let rec spath = function
 
 let snumber (n: number) =
   let spc (p, c) = string_of_int c ^ match p with
-    | Some p -> "len " ^ spath p
-    | None -> "" in
+    | p -> "len " ^ spath p in
   String.concat " + " (List.map spc n)
 
 let rec sformula = function
