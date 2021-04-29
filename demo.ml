@@ -78,6 +78,40 @@ let rearrange ((l, r): number * number) : number * number =
   end in
   eqsplit (add l (mult (-1) r))
 
+let rec gcd u = function
+  | 0 -> abs u | v -> gcd v (u mod v)
+  
+let lcm m n = match m, n with
+  | 0, _ | _, 0 -> 0 | m, n -> abs (m * n) / (gcd m n)
+
+let compose f g x =
+  f (g x)
+
+let rec twith pt ?(p = Val) t =
+  match List.assoc_opt p pt with
+    | Some t -> t
+    | None -> match t with
+      | Sum _ | Lst _ -> t
+      | Prod nts ->
+        let twith (n, t) =
+          let p = Dot(p, n) in
+            (n, twith pt ~p t) in
+        Prod(List.map twith nts)
+      | Void -> assert false
+
+let rec ebuild pe ?(p = Val) ~v t =
+  match List.assoc_opt p pe with
+    | Some e -> e
+    | None -> match t with
+      | RSum _ | RLst _ -> v
+      | RProd nts ->
+        let ebuild (n, t) =
+          let p, v = Dot(p, n), Proj(n, v) in
+            (n, ebuild pe ~p ~v t) in
+        Tuple(List.map ebuild nts)
+      | Refine(t, phi) -> ebuild pe ~p ~v t
+      | RVoid -> assert false
+
 let rec simplify = function
   | RSum(rt1, rt2) ->
     let i1, t1 = simplify rt1 in
@@ -103,7 +137,42 @@ let rec simplify = function
     begin match frewrite i phi with
       | LEq(n1, n2) ->
         let nu, nv = rearrange (n1, n2) in
-        (??)
+        let (pu, cu), (qv, dv) =
+          List.split nu, List.split nv in
+        let lselect p =
+          let Lst t' = tselect t p in t' in
+        let tu =
+          let power t i =
+            Prod(List.init i (fun i -> (string_of_int i, t))) in
+          List.map begin fun (pu, cu) ->
+            Prod(List.mapi begin fun i (qv, dv) ->
+                let luv = lcm cu dv in
+                let au, bv = lselect pu, lselect qv in
+                (string_of_int i, Lst(Prod(["a", power au (luv / cu);
+                                            "b", power bv (luv / dv)])))
+              end nv)
+          end nu in
+        let tv =
+          List.map lselect qv in
+        let concat (hd :: tl) =
+          List.fold_left (fun l r -> Append(l, r)) hd tl in
+        let epu v =
+          List.map begin fun (pu, cu) ->
+            concat (List.mapi begin fun i (qv, dv) ->
+                let luv = lcm cu dv in
+                Flatten(luv / dv, Map(("x", Proj("a", V "x")), Proj(string_of_int i, v)))
+              end nv)
+          end nu in
+        let eqv v =
+          List.mapi begin fun i (qv, dv) ->
+            concat (List.map begin fun (pu, cu) ->
+                let luv = lcm cu dv in
+                Flatten(luv / dv, Map(("x", Proj("b", V "x")), Proj(string_of_int i, v)))
+              end nu)
+          end nv in
+        let t' = twith (List.combine pu tu @ List.combine qv tv) t in
+        let i' v = ebuild (List.combine pu (epu v) @ List.combine qv (eqv v)) ~v rt in
+        (compose i' i, t')
       | _ -> assert false
       end
   | Refine(_, False) | RVoid ->
