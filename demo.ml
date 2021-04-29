@@ -32,13 +32,10 @@ type refine = RVoid
   | RLst of refine
   | Refine of refine * formula
 
-let assoc_update f k v m =
-  let process b kv = match b, kv with
-    | false, (ki, v) when ki = k -> (true, (k, f v))
-    | b, kv -> (b, kv) in
-  match List.fold_left_map process false m with
-    | false, res -> (k, f v) :: res
-    | true, res -> res
+let rec assoc_update f k v = function
+  | (ki, vi) :: rest when ki = k -> (ki, f vi) :: rest
+  | hd :: rest -> hd :: assoc_update f k v rest
+  | [] -> [(k, f v)]
 
 let add (n: number) : number -> number =
   List.fold_left (fun n (p, c) -> assoc_update ((+) c) p 0 n) n
