@@ -183,11 +183,11 @@ let rec simplify = function
 
 (**** to string helpers ****)
 
-let snames so (x, o) = x ^ ": " ^ so o
+let snames so (x, o) = x ^ ":" ^ so o
 
 let rec ssimple = function
   | Sum(l, r) -> ssimple l ^ " + " ^ ssimple r
-  | Prod ts -> "< " ^ String.concat ", " (List.map (snames ssimple) ts) ^ " >"
+  | Prod ts -> "<" ^ String.concat ", " (List.map (snames ssimple) ts) ^ ">"
   | Lst t -> "[" ^ ssimple t ^ "]"
   | Void -> "_|_"
 
@@ -207,9 +207,9 @@ let rec sformula = function
 
 let rec srefine = function
   | RSum(l, r) -> srefine l ^ " + " ^ srefine r
-  | RProd ts -> "< " ^ String.concat ", " (List.map (snames srefine) ts) ^ " >"
+  | RProd ts -> "<" ^ String.concat ", " (List.map (snames srefine) ts) ^ ">"
   | Refine(t, phi) -> "{ " ^ srefine t ^ " | " ^ sformula phi ^ " }"
   | RLst t -> "[" ^ srefine t ^ "]"
-  | RVoid -> "F"
+  | RVoid -> "_|_"
 
 (**** demo ****)
