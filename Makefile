@@ -7,3 +7,8 @@ build:
 		lang.ml \
 		parse.mli parse.ml \
 		demo.ml
+
+.PHONY: clean
+clean:
+	rm *.cmi *.cmx *.o simplify
+
