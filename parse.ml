@@ -1,323 +1,23 @@
-open Bark
-open Bark.Syntax
 open Lang
 open Utils
 
-(* Parser specialization *)
+open Bark
+open Bark.Syntax
+
+(* === Parser specialization === *)
 
 type problem =
-  | ExpectingLeftParen
-  | ExpectingRightParen
-  | ExpectingLeftBracket
-  | ExpectingRightBracket
-  | ExpectingComma
-  | ExpectingRightArrow
-  | ExpectingLAngle
-  | ExpectingRAngle
-  | ExpectingSpace
-  | ExpectingPound
-  | ExpectingDot
-  | ExpectingEquals
-  | ExpectingDoubleEquals
-  | ExpectingHole
-  | ExpectingLambda
-  | ExpectingPipe
-  | ExpectingColon
-  | ExpectingFuncSpec
-
-  | ExpectingWildcard
-  | ExpectingLineComment
-  | ExpectingMultiCommentStart
-  | ExpectingMultiCommentEnd
-
-  | ExpectingExactly of int * int
-
-  | ExpectingMoreIndent
-
-  | ExpectingLet
-  | ExpectingIn
-  | ExpectingCase
-  | ExpectingOf
-  | ExpectingType
-  | ExpectingAssert
-
-  | ExpectingNat
-
-  | ExpectingConstructorName
-  | ExpectingVariableName
-  | ExpectingHoleName
-
-  | ExpectingFunctionArity
-
-  | ExpectingTupleSize
-  | ExpectingTupleIndex
-
-  | ExpectingName of string * string
-
-  | NegativeArity of int
-  | ZeroArity
-
-  | ExpectingEnd
+  | Expecting of string
 
 type context =
-  | CType
-  | CTTuple
-  | CTData
-  | CTArr
-  | CTForall
-  | CTVar
-
-  | CTypeParam
-  | CTypeArg
-
-  | CPat
-  | CPTuple
-  | CPVar
-  | CPWildcard
+  string
 
 type 'a parser =
   (context, problem, 'a) Bark.parser
 
-(* Symbols *)
+(* === Parser helpers === *)
 
-let left_paren =
-  Token ("(", ExpectingLeftParen)
-
-let right_paren =
-  Token (")", ExpectingRightParen)
-
-let left_bracket =
-  Token ("[", ExpectingLeftBracket)
-
-let right_bracket =
-  Token ("]", ExpectingRightBracket)
-
-let comma =
-  Token (",", ExpectingComma)
-
-let right_arrow =
-  Token ("->", ExpectingRightArrow)
-
-let langle =
-  Token ("<", ExpectingLAngle)
-
-let rangle =
-  Token (">", ExpectingRAngle)
-
-let pound =
-  Token ("#", ExpectingPound)
-
-let dot =
-  Token (".", ExpectingDot)
-
-let equals =
-  Token ("=", ExpectingEquals)
-
-let double_equals =
-  Token ("==", ExpectingDoubleEquals)
-
-let hole =
-  Token ("??", ExpectingHole)
-
-let lambda =
-  Token ("\\", ExpectingLambda)
-
-let pipe =
-  Token ("|", ExpectingPipe)
-
-let colon =
-  Token (":", ExpectingColon)
-
-let wildcard =
-  Token ("_", ExpectingWildcard)
-
-let line_comment_start =
-  Token ("--", ExpectingLineComment)
-
-let multi_comment_start =
-  Token ("{-", ExpectingMultiCommentStart)
-
-let multi_comment_end =
-  Token ("-}", ExpectingMultiCommentEnd)
-
-(* Keywords *)
-
-let forall_keyword =
-  Token ("forall", ExpectingLet)
-
-let let_keyword =
-  Token ("let", ExpectingLet)
-
-let in_keyword =
-  Token ("in", ExpectingIn)
-
-let case_keyword =
-  Token ("case", ExpectingCase)
-
-let of_keyword =
-  Token ("of", ExpectingOf)
-
-let type_keyword =
-  Token ("type", ExpectingType)
-
-let assert_keyword =
-  Token ("assert", ExpectingAssert)
-
-(* No-lookahead keywords *)
-
-let specify_function_token =
-  Token ("specifyFunction", ExpectingFuncSpec)
-
-(* Parser helpers *)
-
-let optional : 'a parser -> 'a option parser =
-  fun p ->
-    one_of
-      [ map (fun x -> Some x) p
-      ; succeed None
-      ]
-
-type indent_strictness =
-  | Strict
-  | Lax
-
-let check_indent : indent_strictness -> unit parser =
-  fun indent_strictness ->
-    let check_ok col indent =
-      match indent_strictness with
-        | Strict ->
-            col > indent
-
-        | Lax ->
-            col >= indent
-    in
-    let* ok =
-      succeed check_ok
-        |= get_col
-        |= get_indent
-    in
-    if ok then
-      succeed ()
-    else
-      problem ExpectingMoreIndent
-
-let with_current_indent : 'a parser -> 'a parser =
-  fun p ->
-    let* col =
-      get_col
-    in
-    with_indent col p
-
-(* Spaces *)
-
-let if_progress : 'a parser -> int -> (int, unit) step parser =
-  fun p offset ->
-    let+ new_offset =
-      succeed (fun n -> n)
-        |. p
-        |= get_offset
-    in
-    if Int.equal offset new_offset then
-      Done ()
-    else
-      Loop new_offset
-
-let any_spaces : unit parser =
-  loop 0
-    ( if_progress
-        ( one_of
-            [ line_comment line_comment_start
-            ; multi_comment multi_comment_start multi_comment_end Nestable
-            ; spaces
-            ]
-        )
-    )
-
-let single_line_spaces : unit parser =
-  loop 0
-    ( if_progress
-        ( one_of
-            [ line_comment line_comment_start
-            ; chomp_while (Char.equal ' ')
-            ]
-        )
-    )
-
-(* Indented spaces *)
-
-let sspaces : unit parser =
-  succeed ()
-    |. any_spaces
-    |. check_indent Strict
-
-let lspaces : unit parser =
-  succeed ()
-    |. any_spaces
-    |. check_indent Lax
-
-let tuple : ('a -> 'b) -> ('a list -> 'b) -> 'a parser -> 'b parser =
-  fun single multiple item ->
-    map
-      ( fun inners ->
-          match inners with
-            | [inner] ->
-                single inner
-
-            | _ ->
-                multiple inners
-      )
-      ( sequence
-          ~start:left_paren
-          ~separator:comma
-          ~endd:right_paren
-          ~spaces:lspaces
-          ~item:item
-          ~trailing:Forbidden
-      )
-
-let listt : 'a parser -> 'a list parser =
-  fun item ->
-    sequence
-      ~start:left_bracket
-      ~separator:comma
-      ~endd:right_bracket
-      ~spaces:lspaces
-      ~item:item
-      ~trailing:Forbidden
-
-let wrapped_poly : 'a parser -> 'a list parser =
-  fun item ->
-    sequence
-      ~start:langle
-      ~separator:comma
-      ~endd:rangle
-      ~spaces:lspaces
-      ~item:item
-      ~trailing:Forbidden
-
-let single_wrapped_poly : 'a parser -> 'a parser =
-  fun item ->
-    succeed (fun x -> x)
-      |. symbol langle
-      |. sspaces
-      |= item
-      |. sspaces
-      |. symbol rangle
-
-let exactly : int -> 'a parser -> 'a list parser =
-  fun n p ->
-    loop (n, [])
-      ( fun (k, rev_xs) ->
-          if k <= 0 then
-            succeed (Done (List.rev rev_xs))
-          else
-            one_of
-              [ map (fun x -> Loop (k - 1, x :: rev_xs)) p
-              ; problem (ExpectingExactly (n, n - k))
-              ]
-      )
-
-let chainl1 :
+let chainl1 : 'a 'b .
  context -> 'a parser -> 'b parser -> ('a -> 'b -> 'a) parser -> 'a parser =
   fun chain_context p_head p_arg op ->
     let rec next acc =
@@ -333,7 +33,8 @@ let chainl1 :
     in
     p_head |> and_then next
 
-let chainr1 : context -> 'a parser -> ('a -> 'a -> 'a) parser -> 'a parser =
+let chainr1 : 'a .
+ context -> 'a parser -> ('a -> 'a -> 'a) parser -> 'a parser =
   fun chain_context p op ->
     let rec rest acc =
       one_of
@@ -352,3 +53,232 @@ let ignore_with : 'a -> unit parser -> 'a parser =
   fun x p ->
     map (fun _ -> x) p
 
+let make_token : string -> problem token =
+  fun tok ->
+    Token (tok, Expecting tok)
+
+let space_symbol =
+  make_token " "
+
+let spaces1 : unit parser =
+  succeed ()
+    |. symbol space_symbol
+    |. spaces
+
+(* === Symbols and Keywords === *)
+
+(* Paths and numbers *)
+
+let val_keyword =
+  make_token "val"
+
+let path_sep_symbol =
+  make_token "."
+
+let len_keyword =
+  make_token "len"
+
+let plus_symbol =
+  make_token "+"
+
+(* Formulae *)
+
+let false_keyword =
+  make_token "F"
+
+let true_keyword =
+  make_token "T"
+
+let leq_symbol =
+  make_token "<="
+
+let or_symbol =
+  make_token "V"
+
+(* Types *)
+
+let void_symbol =
+  make_token "_|_"
+
+let sum_symbol =
+  make_token "+"
+
+let list_left_symbol =
+  make_token "["
+
+let list_right_symbol =
+  make_token "]"
+
+let prod_left_symbol =
+  make_token "<"
+
+let prod_sep_symbol =
+  make_token ","
+
+let prod_ascription_symbol =
+  make_token ":"
+
+let prod_right_symbol =
+  make_token ">"
+
+let refine_left_symbol =
+  make_token "{"
+
+let refine_mid_symbol =
+  make_token "|"
+
+let refine_right_symbol =
+  make_token "}"
+
+(* === Parsing === *)
+
+(* Paths *)
+
+let inner_char : char -> bool =
+  fun c ->
+    Utils.lowercase_char c
+      || Utils.uppercase_char c
+      || Utils.digit_char c
+      || Char.equal c '_'
+
+let reserved_words =
+  String_set.of_list []
+
+let variable_name : string parser =
+  variable
+    ~start:Utils.lowercase_char
+    ~inner:inner_char
+    ~reserved:reserved_words
+    ~expecting:(Expecting "variable name")
+
+let path : path parser =
+  succeed (fun p -> p)
+    |= chainl1 "path"
+		     ( ignore_with Val (keyword val_keyword)
+		     )
+		     variable_name
+         ( ignore_with (fun base ext -> Dot (base, ext))
+             ( succeed ()
+                 |. symbol path_sep_symbol
+                 |. spaces
+             )
+         )
+    |. spaces
+
+(* Numbers *)
+
+let scaled_length : (path * int) parser =
+	succeed (fun n p -> (p, n))
+		|= int (Expecting "scalar")
+		|. keyword len_keyword
+		|. spaces1
+    |= path
+
+let number : number parser =
+  map List.rev @@
+    chainl1 "number"
+      ( succeed (fun n -> [n])
+          |= scaled_length
+      )
+      scaled_length
+      ( ignore_with (fun ns n -> n :: ns)
+          ( succeed ()
+              |. symbol plus_symbol
+              |. spaces
+          )
+      )
+
+(* Formulae *)
+
+let atom : formula parser =
+  succeed (fun a -> a)
+    |= one_of
+         [ in_context "false formula"
+             ( ignore_with False (keyword false_keyword)
+             )
+         ; in_context "true formula"
+             ( ignore_with True (keyword true_keyword)
+             )
+         ; in_context "leq formula"
+             ( succeed (fun n1 n2 -> LEq (n1, n2))
+                 |= number
+                 |. spaces
+                 |. symbol leq_symbol
+                 |. spaces
+                 |= number
+             )
+         ]
+    |. spaces
+
+let disjunction_clause : formula parser =
+  chainr1 "disjunction" atom
+    ( ignore_with (fun phi1 phi2 -> Or (phi1, phi2))
+        ( succeed ()
+            |. symbol or_symbol
+            |. spaces
+        )
+    )
+
+let formula : formula parser =
+  disjunction_clause
+
+(* Refinement types *)
+
+let rec refine_atom' : unit -> refine parser = fun () ->
+  succeed (fun a -> a)
+    |= one_of
+         [ in_context "void type"
+             ( ignore_with RVoid (symbol void_symbol)
+             )
+         ; in_context "list type"
+             ( succeed (fun inner -> RLst inner)
+                 |. symbol list_left_symbol
+                 |. spaces
+                 |= lazily refine'
+                 |. symbol list_right_symbol
+             )
+         ; in_context "refinement"
+             ( succeed (fun r phi -> Refine (r, phi))
+                 |. symbol refine_left_symbol
+                 |. spaces
+                 |= lazily refine'
+                 |. symbol refine_mid_symbol
+                 |. spaces
+                 |= formula
+                 |. symbol refine_right_symbol
+             )
+         ; in_context "product type"
+             ( map (fun ts -> RProd ts)
+               ( sequence
+                   ~start:prod_left_symbol
+                   ~separator:prod_sep_symbol
+                   ~endd:prod_right_symbol
+                   ~spaces:spaces
+                   ~item:
+                     ( succeed (fun name r -> (name, r))
+                         |= variable_name
+                         |. spaces
+                         |. symbol prod_ascription_symbol
+                         |. spaces
+                         |= lazily refine'
+                     )
+                   ~trailing:Forbidden
+               )
+             )
+         ]
+    |. spaces
+
+and refine_sum' : unit -> refine parser = fun () ->
+  chainr1 "sum type" (lazily refine_atom')
+    ( ignore_with (fun r1 r2 -> RSum (r1, r2))
+        ( succeed ()
+            |. symbol sum_symbol
+            |. spaces
+        )
+    )
+
+and refine' : unit -> refine parser = fun () ->
+  lazily refine_sum'
+
+let refine : refine parser =
+  lazily refine'
