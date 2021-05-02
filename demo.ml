@@ -1,6 +1,10 @@
 open Lang
 open Utils
 
+let rec proj p v = match p with
+  | Dot(p, x) -> Proj(x, proj p v)
+  | Val -> v
+
 let rec tselect t = function
   | Dot(p, x) -> let Prod ts = tselect t p in List.assoc x ts
   | Val -> t
@@ -108,16 +112,20 @@ let rec simplify = function
         let epu v =
           List.map begin fun (pu, cu) ->
             concat (List.mapi begin fun i (qv, dv) ->
-                let luv = lcm cu dv in
-                Flatten(luv / dv, Map(("x", Proj("a", V "x")), Proj(string_of_int i, v)))
+                let luv'cu = lcm cu dv / cu in
+                let extract = Proj(string_of_int i, proj pu v) in
+                let rebuilt = Map(("x", Proj("a", V "x")), extract) in
+                Flatten(luv'cu, rebuilt)
               end nv)
           end nu in
         let eqv v =
           List.mapi begin fun i (qv, dv) ->
-            concat (List.map begin fun (pu, cu) ->
-                let luv = lcm cu dv in
-                Flatten(luv / dv, Map(("x", Proj("b", V "x")), Proj(string_of_int i, v)))
-              end nu)
+            concat ((List.map begin fun (pu, cu) ->
+                let luv'dv = lcm cu dv / dv in
+                let extract = Proj(string_of_int i, proj pu v) in
+                let rebuilt = Map(("x", Proj("b", V "x")), extract) in
+                Flatten(luv'dv, rebuilt)
+              end nu) @ [proj qv v])
           end nv in
         let t' = twith (List.combine pu tu @ List.combine qv tv) t in
         let i' v = ebuild (List.combine pu (epu v) @ List.combine qv (eqv v)) ~v rt in
