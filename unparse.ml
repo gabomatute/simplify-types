@@ -1,7 +1,7 @@
 open Lang
 
-let snamed so os =
-  let sname (n, o) =  n ^ ":" ^ so o in
+let snamed ?(v = ":") so os =
+  let sname (n, o) =  n ^ v ^ so o in
   String.concat ", " (List.map sname os)
 
 let rec ssimple = function
@@ -9,6 +9,19 @@ let rec ssimple = function
   | Prod ts -> "<" ^ snamed ssimple ts ^ ">"
   | Lst t -> "[" ^ ssimple t ^ "]"
   | Void -> "_|_"
+
+let rec sexp = function
+  | V n -> n
+  | L e -> "Left " ^ sexp e
+  | R e -> "Right " ^ sexp e
+  | Case(e, l, r) ->
+    let sb c (n, e) = c ^ " " ^ n ^ " -> " ^ sexp e in
+    "Case " ^ sexp e ^ " of " ^ sb "Left" l ^ "; " ^ sb "Right" r
+  | Tuple es -> "<" ^ snamed ~v:" = " sexp es ^ ">"
+  | Proj(n, e) -> "proj_{" ^ n ^ "} " ^ sexp e
+  | Append(l, r) -> sexp l ^ " ++ " ^ sexp r
+  | Flatten(i, e) -> "flatten_" ^ string_of_int i ^ " " ^ sexp e
+  | Map((n, f), e) -> "map (λ" ^ n ^ ". " ^ sexp f ^ ") " ^ sexp e
 
 let rec spath = function
   | Dot(p, x) -> spath p ^ "." ^ x

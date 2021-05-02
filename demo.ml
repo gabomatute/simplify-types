@@ -139,3 +139,36 @@ let rec simplify = function
     simplify rt
 
 (**** demo ****)
+
+open Unparse
+
+module SimplifyExamples = struct
+  let simplify_then_print input =
+    print_endline ("refine = " ^ input ^ "");
+    match Bark.run Parse.refine input with
+      | Ok rt ->
+          let i, t = simplify rt in
+          print_endline ("simple = " ^ ssimple t);
+          print_endline ("i(val) = " ^ sexp (i(V "val")));
+          print_newline ()
+      | Error _ ->
+          print_endline ("!!! Parse failure: fix example")
+
+  let simplify_examples =
+    [ "<>"
+    ; "<> + <>"
+    ; "[<>]"
+    ; "<a:<>>"
+    ; "<a:[<>]>"
+    ; "{ <> | T }"
+    ; "<a:[<>], b:[<>]>"
+    ; "{ <a:[<>], b:[<>]> | 1len val.a <= 1len val.b}"
+    ]
+
+
+  let run () =
+    List.iter simplify_then_print simplify_examples
+end
+
+let () =
+  SimplifyExamples.run()
