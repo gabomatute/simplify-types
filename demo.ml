@@ -13,12 +13,13 @@ let rec eselect e = function
   | Dot(p, x) -> let Tuple es = eselect e p in List.assoc x es
   | Val -> e
 
-let rec slen = function
-  | Proj((x, e)) -> slen (eselect e (Dot(Val, x)))
+let rec slen ?(p = Val) = function
+  | Proj(n, e) -> slen ~p:(Dot(p, n)) e
+  | Tuple es -> let Dot(p, n) = p in slen ~p (List.assoc n es)
   | Append(e1, e2) -> add (slen e1) (slen e2)
   | Flatten(c, e) -> mult c (slen e)
   | Map((x, e1), e2) -> slen e2
-  | V "val" -> len Val
+  | V "val" -> len p
   | _ -> assert false
 
 let rec nrewrite i n =
