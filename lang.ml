@@ -29,3 +29,17 @@ type refine = RVoid
   | RProd of (name * refine) list
   | RLst of refine
   | Refine of refine * formula
+
+
+(* number pseudo-constructors *)
+
+open Utils
+
+let len p : number =
+  [(p, 1)]
+
+let add (n: number) : number -> number =
+  List.fold_left (fun n (p, c) -> assoc_update ((+) c) p ~v:0 n) n
+
+let mult c : number -> number =
+  List.map (fun (p, ci) -> (p, c * ci))

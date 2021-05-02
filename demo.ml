@@ -1,18 +1,5 @@
 open Lang
-
-let lens cs : number =
-  List.map (fun (c, p) -> (p, c)) cs
-
-let rec assoc_update f k v = function
-  | (ki, vi) :: rest when ki = k -> (ki, f vi) :: rest
-  | hd :: rest -> hd :: assoc_update f k v rest
-  | [] -> [(k, f v)]
-
-let add (n: number) : number -> number =
-  List.fold_left (fun n (p, c) -> assoc_update ((+) c) p 0 n) n
-
-let mult c : number -> number =
-  List.map (fun (p, ci) -> (p, c * ci))
+open Utils
 
 let rec tselect t = function
   | Dot(p, x) -> let Prod ts = tselect t p in List.assoc x ts
@@ -27,7 +14,7 @@ let rec slen = function
   | Append(e1, e2) -> add (slen e1) (slen e2)
   | Flatten(c, e) -> mult c (slen e)
   | Map((x, e1), e2) -> slen e2
-  | V "val" -> lens [1, Val]
+  | V "val" -> len Val
   | _ -> assert false
 
 let rec nrewrite i n =
@@ -48,15 +35,6 @@ let rearrange ((l, r): number * number) : number * number =
     | pi, ci -> Either.Right (pi, -ci)
   end in
   eqsplit (add l (mult (-1) r))
-
-let rec gcd u = function
-  | 0 -> abs u | v -> gcd v (u mod v)
-  
-let lcm m n = match m, n with
-  | 0, _ | _, 0 -> 0 | m, n -> abs (m * n) / (gcd m n)
-
-let compose f g x =
-  f (g x)
 
 let rec twith pt ?(p = Val) t =
   match List.assoc_opt p pt with
@@ -143,7 +121,7 @@ let rec simplify = function
           end nv in
         let t' = twith (List.combine pu tu @ List.combine qv tv) t in
         let i' v = ebuild (List.combine pu (epu v) @ List.combine qv (eqv v)) ~v rt in
-        (compose i' i, t')
+        (i' >> i, t')
       | _ -> assert false
       end
   | Refine(_, False) | RVoid ->
