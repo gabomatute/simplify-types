@@ -97,8 +97,6 @@ let rec simplify = function
         let nu, nv = rearrange (n1, n2) in
         let (pu, cu), (qv, dv) =
           List.split nu, List.split nv in
-        let lselect p =
-          let Lst t' = tselect t p in t' in
         let tu =
           let power t i =
             if i = 1 then t else
@@ -106,13 +104,13 @@ let rec simplify = function
           List.map begin fun (pu, cu) ->
             Prod(List.mapi begin fun i (qv, dv) ->
                 let luv = lcm cu dv in
-                let au, bv = lselect pu, lselect qv in
+                let Lst au, Lst bv = tselect t pu, tselect t qv in
                 (string_of_int i, Lst(Prod(["α", power au (luv / cu);
                                             "β", power bv (luv / dv)])))
               end nv)
           end nu in
         let tv =
-          List.map lselect qv in
+          List.map (tselect t) qv in
         let concat (hd :: tl) =
           List.fold_left (fun l r -> Append(l, r)) hd tl in
         let epu v =
