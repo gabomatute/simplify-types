@@ -101,7 +101,8 @@ let rec simplify = function
           let Lst t' = tselect t p in t' in
         let tu =
           let power t i =
-            Prod(List.init i (fun i -> (string_of_int i, t))) in
+            if i = 1 then t else
+            Prod(List.init i (fun i -> (string_of_int (i + 1), t))) in
           List.map begin fun (pu, cu) ->
             Prod(List.mapi begin fun i (qv, dv) ->
                 let luv = lcm cu dv in
@@ -120,6 +121,7 @@ let rec simplify = function
                 let luv'cu = lcm cu dv / cu in
                 let extract = Proj(string_of_int i, proj pu v) in
                 let rebuilt = Map(("x", Proj("α", V "x")), extract) in
+                if luv'cu = 1 then rebuilt else
                 Flatten(luv'cu, rebuilt)
               end nv)
           end nu in
@@ -129,6 +131,7 @@ let rec simplify = function
                 let luv'dv = lcm cu dv / dv in
                 let extract = Proj(string_of_int i, proj pu v) in
                 let rebuilt = Map(("x", Proj("β", V "x")), extract) in
+                if luv'dv = 1 then rebuilt else
                 Flatten(luv'dv, rebuilt)
               end nu) @ [proj qv v])
           end nv in
