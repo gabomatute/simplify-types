@@ -106,8 +106,8 @@ let rec simplify = function
             Prod(List.mapi begin fun i (qv, dv) ->
                 let luv = lcm cu dv in
                 let au, bv = lselect pu, lselect qv in
-                (string_of_int i, Lst(Prod(["a", power au (luv / cu);
-                                            "b", power bv (luv / dv)])))
+                (string_of_int i, Lst(Prod(["α", power au (luv / cu);
+                                            "β", power bv (luv / dv)])))
               end nv)
           end nu in
         let tv =
@@ -119,7 +119,7 @@ let rec simplify = function
             concat (List.mapi begin fun i (qv, dv) ->
                 let luv'cu = lcm cu dv / cu in
                 let extract = Proj(string_of_int i, proj pu v) in
-                let rebuilt = Map(("x", Proj("a", V "x")), extract) in
+                let rebuilt = Map(("x", Proj("α", V "x")), extract) in
                 Flatten(luv'cu, rebuilt)
               end nv)
           end nu in
@@ -128,7 +128,7 @@ let rec simplify = function
             concat ((List.map begin fun (pu, cu) ->
                 let luv'dv = lcm cu dv / dv in
                 let extract = Proj(string_of_int i, proj pu v) in
-                let rebuilt = Map(("x", Proj("b", V "x")), extract) in
+                let rebuilt = Map(("x", Proj("β", V "x")), extract) in
                 Flatten(luv'dv, rebuilt)
               end nu) @ [proj qv v])
           end nv in
