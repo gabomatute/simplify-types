@@ -9,24 +9,28 @@ let rec tselect t = function
   | Dot(p, x) -> let Prod ts = tselect t p in List.assoc x ts
   | Val -> t
 
-let rec eselect e = function
-  | Dot(p, x) -> let Tuple es = eselect e p in List.assoc x es
-  | Val -> e
 
-let rec slen ?(p = Val) = function
-  | Proj(n, e) -> slen ~p:(Dot(p, n)) e
-  | Tuple es -> let Dot(p, n) = p in slen ~p (List.assoc n es)
+let rec stack ?(s = []) = function
+  | Dot(p, x) -> stack ~s:(x :: s) p
+  | Val -> s
+
+let rec path ?(p = Val) = function
+  | x :: rest -> path ~p:(Dot(p, x)) rest
+  | [] -> p
+
+let rec slen ?(s = []) = function
+  | Proj(n, e) -> slen ~s:(n :: s) e
+  | Tuple es -> let n :: s = s in slen ~s (List.assoc n es)
   | Append(e1, e2) -> add (slen e1) (slen e2)
   | Flatten(c, e) -> mult c (slen e)
   | Map((x, e1), e2) -> slen e2
-  | V "val" -> len p
+  | V "val" -> len (path s)
   | _ -> assert false
 
 let rec nrewrite i n =
-  let ebody = i (V "val") in
-  let e' p = eselect ebody p in
+  let e = i (V "val") in
   let n' = function
-    | p, c -> mult c (slen (e' p)) in
+    | p, c -> mult c (slen ~s:(stack p) e) in
   List.fold_left add [] (List.map n' n)
 
 let rec frewrite i = function
