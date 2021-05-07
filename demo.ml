@@ -183,7 +183,11 @@ let rec optimize ~v = function
     | V n' when n' = n -> e
     | f -> Map((n, f), e)
     end
-  | Append(l, r) -> Append(optimize ~v l, optimize ~v r)
+  | Append(l, r) ->
+    begin match optimize ~v l, optimize ~v r with
+    | e, Ls(_, []) | Ls(_, []), e -> e
+    | l, r -> Append(l, r)
+    end
   | Flatten(i, e) -> Flatten(i, optimize ~v e)
 
 
