@@ -1,8 +1,8 @@
 open Lang
 
-let snamed ?(v = ":") so os =
+let snamed ?(j = ", ") ?(v = ":") so os =
   let sname (n, o) =  n ^ v ^ so o in
-  String.concat ", " (List.map sname os)
+  String.concat j (List.map sname os)
 
 let rec ssimple = function
   | Sum(l, r) -> ssimple l ^ " + " ^ ssimple r
@@ -10,19 +10,24 @@ let rec ssimple = function
   | Lst t -> "[" ^ ssimple t ^ "]"
   | Void -> "_|_"
 
-let rec sexp st = function
+let rec sexp ?(d = 1) st =
+  let br i =
+    let indent = String.make (i * 2) ' ' in "\n" ^ indent in
+  function
   | V n -> (n : string)
-  | L(e, t) -> "Left_{" ^ st t ^ "} " ^ sexp st e
-  | R(t, e) -> "Right_{" ^ st t ^ "} " ^ sexp st e
-  | Case(e, l, r) ->
-    let sb c (n, e) = c ^ " " ^ n ^ " -> " ^ sexp st e in
-    "Case " ^ sexp st e ^ " of " ^ sb "Left" l ^ "; " ^ sb "Right" r
-  | Tuple es -> "<" ^ snamed ~v:" = " (sexp st) es ^ ">"
-  | Proj(n, e) -> "proj_{" ^ n ^ "} " ^ sexp st e
-  | Ls(t, es) -> "[" ^ (String.concat "; " (List.map (sexp st) es)) ^ "]"
-  | Map((n, f), e) -> "map (λ" ^ n ^ ". " ^ sexp st f ^ ") " ^ sexp st e
-  | Append(l, r) -> sexp st l ^ " ++ " ^ sexp st r
-  | Flatten(i, e) -> "flatten_" ^ string_of_int i ^ " " ^ sexp st e
+  | L(e, t) -> "Left_{" ^ st t ^ "} " ^ sexp ~d st e
+  | R(t, e) -> "Right_{" ^ st t ^ "} " ^ sexp ~d st e
+  | Case(e, l, r) -> let c, d = d, d + 1 in
+    let sb t (n, e) = br c ^ t ^ " " ^ n ^ " -> " ^ sexp ~d st e in
+    "Case " ^ sexp ~d st e ^ " of " ^ sb "Left" l ^ ";" ^ sb "Right" r
+  | Tuple [] -> "<>" (* don't indent *)
+  | Tuple es -> let c, d = d, d + 1 in
+    "<" ^ br d ^ snamed ~j:("," ^ br d) ~v:" = " (sexp ~d st) es ^ br c ^ ">"
+  | Proj(n, e) -> "proj_{" ^ n ^ "} " ^ sexp ~d st e
+  | Ls(t, es) -> "[" ^ (String.concat "; " (List.map (sexp ~d st) es)) ^ "]"
+  | Map((n, f), e) -> "map (λ" ^ n ^ ". " ^ sexp ~d st f ^ ") " ^ sexp ~d st e
+  | Append(l, r) -> sexp ~d st l ^ " ++ " ^ sexp ~d st r
+  | Flatten(i, e) -> "flatten_" ^ string_of_int i ^ " " ^ sexp ~d st e
 
 let rec spath = function
   | Dot(p, x) -> spath p ^ "." ^ x
