@@ -143,6 +143,45 @@ let rec simplify = function
   | Refine(rt, True) ->
     simplify rt
 
+let rec one = function
+  | V _ | L _ | R _ | Case _ -> false
+  | Tuple es -> List.for_all (fun (n, e) -> one e) es | Proj _ -> false
+  | Map _ | Append _ | Flatten _ -> false
+
+let rec optimize ~v = function
+  | V n -> V n
+  | L(e, t) -> L(optimize ~v e, t)
+  | R(t, e) -> R(t, optimize ~v e)
+  | Case(e, (ln, le), (rn, re)) ->
+    let e = optimize ~v e in
+    let lt, rt = let Sum(l, r) = ssyn ~vars:[v] e in l, r in
+    begin match optimize ~v:(ln, lt) le, optimize ~v:(rn, rt) re with
+    | L(V ln', _), R(_, V rn') when (ln', rn') = (ln, rn) -> e
+    | le, re -> Case(e, (ln, le), (rn, re))
+    end
+  | Tuple es ->
+    begin match Tuple(List.map (fun (n, e) -> (n, optimize ~v e)) es) with
+    | Tuple((n, Proj(n', e)) :: es) when n' = n && List.for_all (function
+      | n, Proj(n', e') when n' = n && e' = e -> true | _ -> false) es -> e
+    | e when one e && ssyn e = snd v -> V(fst v)
+    | e -> e
+    end
+  | Proj(n, e) ->
+    begin match optimize ~v e with
+    | Tuple es -> List.assoc n es
+    | e -> Proj(n, e)
+    end
+  | Map((n, f), e) ->
+    let e = optimize ~v e in
+    let t = let Lst t = ssyn ~vars:[v] e in t in
+    begin match optimize ~v:(n, t) f with
+    | V n' when n' = n -> e
+    | f -> Map((n, f), e)
+    end
+  | Append(l, r) -> Append(optimize ~v l, optimize ~v r)
+  | Flatten(i, e) -> Flatten(i, optimize ~v e)
+
+
 (**** demo ****)
 
 open Unparse
@@ -154,7 +193,8 @@ module SimplifyExamples = struct
       | Ok rt ->
           let i, t = simplify rt in
           print_endline ("simple = " ^ ssimple t);
-          print_endline ("i(val) = " ^ sexp ssimple (i (V "val")));
+          let ival = optimize ~v:("val", t) (i (V "val")) in
+          print_endline ("i(val) = " ^ sexp ssimple ival);
           print_newline ()
       | Error _ ->
           print_endline ("!!! Parse failure: fix example")
@@ -164,6 +204,7 @@ module SimplifyExamples = struct
     ; "<> + <>"
     ; "[<>]"
     ; "<a:<>>"
+    ; "<a:<> + <>>"
     ; "<a:[<>]>"
     ; "{ <> | T }"
     ; "<a:[<>], b:[<>]>"
