@@ -19,9 +19,10 @@ let rec sexp st = function
     "Case " ^ sexp st e ^ " of " ^ sb "Left" l ^ "; " ^ sb "Right" r
   | Tuple es -> "<" ^ snamed ~v:" = " (sexp st) es ^ ">"
   | Proj(n, e) -> "proj_{" ^ n ^ "} " ^ sexp st e
+  | Ls(t, es) -> "[" ^ (String.concat "; " (List.map (sexp st) es)) ^ "]"
+  | Map((n, f), e) -> "map (λ" ^ n ^ ". " ^ sexp st f ^ ") " ^ sexp st e
   | Append(l, r) -> sexp st l ^ " ++ " ^ sexp st r
   | Flatten(i, e) -> "flatten_" ^ string_of_int i ^ " " ^ sexp st e
-  | Map((n, f), e) -> "map (λ" ^ n ^ ". " ^ sexp st f ^ ") " ^ sexp st e
 
 let rec spath = function
   | Dot(p, x) -> spath p ^ "." ^ x

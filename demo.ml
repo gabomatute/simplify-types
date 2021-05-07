@@ -148,7 +148,7 @@ let rec simplify = function
 let rec one = function
   | V _ | L _ | R _ | Case _ -> false
   | Tuple es -> List.for_all (fun (n, e) -> one e) es | Proj _ -> false
-  | Map _ | Append _ | Flatten _ -> false
+  | Ls _ | Map _ | Append _ | Flatten _ -> false
 
 let rec optimize ~v = function
   | V n -> V n
@@ -173,6 +173,7 @@ let rec optimize ~v = function
     | Tuple es -> List.assoc n es
     | e -> Proj(n, e)
     end
+  | Ls(t, es) -> Ls(t, List.map (optimize ~v) es)
   | Map((n, f), e) ->
     let e = optimize ~v e in
     let t = let Lst t = ssyn ~vars:[v] e in t in
