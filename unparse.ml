@@ -10,18 +10,18 @@ let rec ssimple = function
   | Lst t -> "[" ^ ssimple t ^ "]"
   | Void -> "_|_"
 
-let rec sexp = function
-  | V n -> n
-  | L e -> "Left " ^ sexp e
-  | R e -> "Right " ^ sexp e
+let rec sexp st = function
+  | V n -> (n : string)
+  | L(e, t) -> "Left_{" ^ st t ^ "} " ^ sexp st e
+  | R(t, e) -> "Right_{" ^ st t ^ "} " ^ sexp st e
   | Case(e, l, r) ->
-    let sb c (n, e) = c ^ " " ^ n ^ " -> " ^ sexp e in
-    "Case " ^ sexp e ^ " of " ^ sb "Left" l ^ "; " ^ sb "Right" r
-  | Tuple es -> "<" ^ snamed ~v:" = " sexp es ^ ">"
-  | Proj(n, e) -> "proj_{" ^ n ^ "} " ^ sexp e
-  | Append(l, r) -> sexp l ^ " ++ " ^ sexp r
-  | Flatten(i, e) -> "flatten_" ^ string_of_int i ^ " " ^ sexp e
-  | Map((n, f), e) -> "map (λ" ^ n ^ ". " ^ sexp f ^ ") " ^ sexp e
+    let sb c (n, e) = c ^ " " ^ n ^ " -> " ^ sexp st e in
+    "Case " ^ sexp st e ^ " of " ^ sb "Left" l ^ "; " ^ sb "Right" r
+  | Tuple es -> "<" ^ snamed ~v:" = " (sexp st) es ^ ">"
+  | Proj(n, e) -> "proj_{" ^ n ^ "} " ^ sexp st e
+  | Append(l, r) -> sexp st l ^ " ++ " ^ sexp st r
+  | Flatten(i, e) -> "flatten_" ^ string_of_int i ^ " " ^ sexp st e
+  | Map((n, f), e) -> "map (λ" ^ n ^ ". " ^ sexp st f ^ ") " ^ sexp st e
 
 let rec spath = function
   | Dot(p, x) -> spath p ^ "." ^ x

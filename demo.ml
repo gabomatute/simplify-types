@@ -74,7 +74,7 @@ let rec simplify = function
   | RSum(rt1, rt2) ->
     let i1, t1 = simplify rt1 in
     let i2, t2 = simplify rt2 in
-    let i v = Case(v, ("x1", L(i1(V "x1"))), ("x2", R(i2(V "x2")))) in
+    let i v = Case(v, ("x1", L(i1(V "x1"), t1)), ("x2", R(t2, i2(V "x2")))) in
     (i, Sum(t1, t2))
   | RProd rnts ->
     let ns, rts = List.split rnts in
@@ -155,7 +155,7 @@ module SimplifyExamples = struct
       | Ok rt ->
           let i, t = simplify rt in
           print_endline ("simple = " ^ ssimple t);
-          print_endline ("i(val) = " ^ sexp (i(V "val")));
+          print_endline ("i(val) = " ^ sexp ssimple (i (V "val")));
           print_newline ()
       | Error _ ->
           print_endline ("!!! Parse failure: fix example")

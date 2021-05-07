@@ -6,12 +6,12 @@ type simple = Void
   | Prod of (name * simple) list
   | Lst of simple
 
-type exp = V of name
-  | L of exp | R of exp
-  | Case of exp * (name * exp) * (name * exp)
-  | Tuple of (name * exp) list | Proj of (name * exp)
-  | Append of exp * exp | Flatten of int * exp
-  | Map of (name * exp) * exp
+type 't exp = V of name
+  | L of 't exp * 't | R of 't * 't exp
+  | Case of 't exp * (name * 't exp) * (name * 't exp)
+  | Tuple of (name * 't exp) list | Proj of (name * 't exp)
+  | Append of 't exp * 't exp | Flatten of int * 't exp
+  | Map of (name * 't exp) * 't exp
 
 type path = Val
   | Dot of path * name
