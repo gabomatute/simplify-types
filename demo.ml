@@ -99,8 +99,7 @@ let rec simplify = function
           List.split nu, List.split nv in
         let tu =
           let power t i =
-            if i = 1 then t else
-            Prod(List.init i (fun i -> (string_of_int (i + 1), t))) in
+            if i = 1 then t else power t i in
           List.map begin fun (pu, cu) ->
             Prod(List.mapi begin fun i (qv, dv) ->
                 let luv = lcm cu dv in

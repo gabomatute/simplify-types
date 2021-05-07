@@ -1,6 +1,8 @@
 let (>>) f g x =
   g (f x)
 
+let (let* ) = Option.bind
+
 let rec assoc_update f k ?v = function
   | (ki, vi) :: rest when ki = k -> (ki, f vi) :: rest
   | hd :: rest -> hd :: assoc_update f k ?v rest
