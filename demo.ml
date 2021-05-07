@@ -112,21 +112,23 @@ let rec simplify = function
           end nu in
         let tv =
           List.map (tselect t) qv in
-        let concat (hd :: tl) =
-          List.fold_left (fun l r -> Append(l, r)) hd tl in
+        let concat t = function
+          | hd :: tl -> List.fold_left (fun l r -> Append(l, r)) hd tl
+          | [] -> Ls(t, []) in
         let epu v =
-          List.map begin fun (pu, cu) ->
-            concat (List.mapi begin fun i (qv, dv) ->
+          List.map2 begin fun tu (pu, cu) ->
+            concat tu (List.mapi begin fun i (qv, dv) ->
                 let luv'cu = lcm cu dv / cu in
                 let extract = Proj(string_of_int i, proj pu v) in
                 let rebuilt = Map(("x", Proj("α", V "x")), extract) in
                 if luv'cu = 1 then rebuilt else
                 Flatten(luv'cu, rebuilt)
               end nv)
-          end nu in
+          end tu nu in
         let eqv v =
           List.mapi begin fun i (qv, dv) ->
-            concat ((List.map begin fun (pu, cu) ->
+            let tv = List.nth tv i in
+            concat tv ((List.map begin fun (pu, cu) ->
                 let luv'dv = lcm cu dv / dv in
                 let extract = Proj(string_of_int i, proj pu v) in
                 let rebuilt = Map(("x", Proj("β", V "x")), extract) in
@@ -211,7 +213,10 @@ module SimplifyExamples = struct
     ; "<a:[<>]>"
     ; "{ <> | T }"
     ; "<a:[<>], b:[<>]>"
+    ; "{ <a:[<>]> | 0len val.a <= 1len val.a }"
+    ; "{ <a:[<>]> | 1len val.a <= 0len val.a}"
     ; "{ <a:[<>], b:[<>]> | 1len val.a <= 1len val.b}"
+    ; "{ { <a:[<>], b:[<>]> | 1len val.a <= 1len val.b} | 1len val.b <= 1len val.a}"
     ]
 
 
