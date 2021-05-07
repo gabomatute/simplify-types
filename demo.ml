@@ -39,10 +39,12 @@ let rec frewrite i = function
   | LEq(n1, n2) -> LEq(nrewrite i n1, nrewrite i n2)
 
 let rearrange ((l, r): number * number) : number * number =
-  let eqsplit = List.partition_map begin function
-    | pi, ci when ci > 0 -> Either.Left (pi, ci)
-    | pi, ci -> Either.Right (pi, -ci)
-  end in
+  let rec eqsplit = function
+    | [] -> [], []
+    | (p, c) :: n -> let l, r = eqsplit n in
+      if c < 0 then l, (p, -c) :: r else
+      if c > 0 then (p, c) :: l, r else
+      l, r in
   eqsplit (add l (mult (-1) r))
 
 let rec twith pt ?(p = Val) t =
