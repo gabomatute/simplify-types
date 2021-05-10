@@ -3,5 +3,5 @@
 *.o
 
 # Programs
-simplify
+demo
 tests

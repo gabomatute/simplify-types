@@ -16,14 +16,13 @@ libraries = str
 # Source dependencies
 lang_deps = utils
 unparse_deps = lang
+simplify_deps = lang utils
 parse_deps = lang utils bark
-demo_deps = lang utils parse bark unparse
+demo_deps = simplify parse unparse
 tests_deps = parse unparse
 
-# Program main modules
-programs = simplify tests
-simplify_main = demo
-tests_main = tests
+# Main modules
+programs = demo tests
 
 # Build rules
 .PHONY: all clean
@@ -47,4 +46,4 @@ transitive = $(foreach dep,$($(1)_deps),$(call transitive,$(dep),$(2))) $(1).$(2
 # Register dependencies as declared
 $(foreach i,$(wildcard *.mli),$(eval $(i:.mli=.$(obj)): $(i:.mli=.cmi)))
 $(foreach src,$(wildcard *.ml),$(eval $(src:.ml=.cmi) $(src:.ml=.$(obj)) &: $(call resolve,$(src:.ml=),cmi)))
-$(foreach prog,$(programs),$(eval $(prog): $(call transitive,$($(prog)_main),$(obj))))
+$(foreach prog,$(programs),$(eval $(prog): $(call transitive,$(prog),$(obj))))
