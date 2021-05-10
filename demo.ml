@@ -105,7 +105,8 @@ let rec simplify = function
           List.map begin fun (pu, cu) ->
             Prod(List.mapi begin fun i (qv, dv) ->
                 let luv = lcm cu dv in
-                let Lst au, Lst bv = tselect t pu, tselect t qv in
+                let au = let Lst au = tselect t pu in au in
+                let bv = let Lst bv = tselect t qv in bv in
                 (string_of_int i, Lst(Prod(["α", power au (luv / cu);
                                             "β", power bv (luv / dv)])))
               end nv)
