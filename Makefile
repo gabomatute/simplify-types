@@ -1,26 +1,50 @@
-.PHONY: build
-build:
-	ocamlopt -o simplify \
-		str.cmxa \
-		bark.mli bark.ml \
-		utils.ml \
-		lang.ml \
-		parse.mli parse.ml \
-		unparse.ml \
-		demo.ml
+# Compiler config
+ocamlc ?= ocamlopt
+flags ?= -g -w -8
 
-.PHONY: test
-test:
-	ocamlopt -o test \
-		str.cmxa \
-		bark.mli bark.ml \
-		utils.ml \
-		lang.ml \
-		parse.mli parse.ml \
-		unparse.ml \
-		tests.ml
-	./test
+ifeq ($(ocamlc), ocamlopt)
+	obj = cmx
+	lib = cmxa
+else
+	obj = cmo
+	lib = cma
+endif
 
-.PHONY: clean
+# Libraries needed
+libraries = str
+
+# Source dependencies
+lang_deps = utils
+unparse_deps = lang
+parse_deps = lang utils bark
+demo_deps = lang utils parse bark unparse
+tests_deps = parse unparse
+
+# Program main modules
+programs = simplify tests
+simplify_main = demo
+tests_main = tests
+
+# Build rules
+.PHONY: all clean
+all: $(programs)
 clean:
-	rm *.cmi *.cmx *.o simplify test
+	rm -rf *.cmi *.cmo *.cmx *.o $(programs)
+
+$(programs):
+	$(ocamlc) $(flags) $(libraries:=.$(lib)) $^ -o $@ 
+
+%.cmi: %.mli
+	$(ocamlc) -opaque $(flags) -c $<
+
+%.cmi %.$(obj): %.ml
+	$(ocamlc) $(flags) -c $<
+
+# Dependency helper functions
+resolve = $($(1)_deps:=.$(2))
+transitive = $(foreach dep,$($(1)_deps),$(call transitive,$(dep),$(2))) $(1).$(2)
+
+# Register dependencies as declared
+$(foreach i,$(wildcard *.mli),$(eval $(i:.mli=.$(obj)): $(i:.mli=.cmi)))
+$(foreach src,$(wildcard *.ml),$(eval $(src:.ml=.cmi) $(src:.ml=.$(obj)) &: $(call resolve,$(src:.ml=),cmi)))
+$(foreach prog,$(programs),$(eval $(prog): $(call transitive,$($(prog)_main),$(obj))))

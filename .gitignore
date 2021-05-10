@@ -1,5 +1,7 @@
-*.cmi
-*.cmx
+# Object files
+*.cm[ixo]
 *.o
+
+# Programs
 simplify
-test
+tests
