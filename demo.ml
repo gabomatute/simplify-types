@@ -226,6 +226,7 @@ module SimplifyExamples = struct
     ; "{ <a:[<>], b:[<>], c:[<>]> | 2len val.a + 3len val.b <= 5len val.c}"
     ; "{ <a:[<>], b:[<>], c:[<>]> | 5len val.a <= 2len val.b + 3len val.c}"
     ; "{ { <a:[<>], b:[<>]> | 1len val.a <= 1len val.b} | 1len val.b <= 1len val.a}"
+    ; "{ <a:[<>], b:[<>], c:[<>]> | 1len val.a <= 1len val.b V 1len val.a <= 1len val.c }"
     ]
 
 
