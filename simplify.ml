@@ -93,6 +93,23 @@ let rec simplify = function
     let i2, t2 = simplify (Refine(t, phi2)) in
     let i v = Case(v, ("x1", i1(V "x1")), ("x2", i2(V "x2"))) in
     (i, Sum(t1, t2))
+  | Refine(RSum(rt1, rt2), Match(MLeft phi)) ->
+    let i, t = simplify (Refine(rt1, phi)) in
+    let i' v = L(v, bare rt2) in
+    (i' >> i, t)
+  | Refine(RSum(rt1, rt2), Match(MRight phi)) ->
+    let i, t = simplify (Refine(rt2, phi)) in
+    let i' v = R(bare rt1, v) in
+    (i' >> i, t)
+  | Refine(RProd ts, Match(MTuple phis)) ->
+    let rt = RProd(List.map begin fun (n, t) ->
+      match List.assoc_opt n phis with
+        | Some phi -> (n, Refine(t, phi))
+        | None -> (n, t)
+      end ts) in
+    simplify rt
+  | Refine(t, Match p) ->
+    assert false
   | Refine (rt, (LEq(n1, n2) as phi)) ->
     let i, t = simplify rt in
     begin match frewrite i phi with

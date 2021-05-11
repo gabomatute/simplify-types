@@ -42,6 +42,12 @@ let rec sformula = function
   | False -> "F" | True -> "T"
   | Or(l, r) -> sformula l ^ " V " ^ sformula r
   | LEq(l, r) -> snumber l ^ " <= " ^ snumber r
+  | Match p -> spattern p
+
+and spattern = function
+  | MLeft phi -> "Left " ^ sformula phi
+  | MRight phi -> "Right " ^ sformula phi
+  | MTuple phis -> "<" ^ snamed ~v:"~" sformula phis ^ ">"
 
 let rec srefine = function
   | RSum(l, r) -> srefine l ^ " + " ^ srefine r

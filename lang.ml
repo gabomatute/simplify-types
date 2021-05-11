@@ -24,6 +24,12 @@ type formula =
   | False | True
   | Or of formula * formula
   | LEq of number * number
+  | Match of pattern
+
+and pattern =
+  | MLeft of formula
+  | MRight of formula
+  | MTuple of (name * formula) list
 
 type refine = RVoid
   | RSum of refine * refine
@@ -151,6 +157,14 @@ let rec fcheck e = function
   | False -> false | True -> true
   | Or(l, r) -> fcheck e l || fcheck e r
   | LEq(l, r) -> ncompute e l <= ncompute e r
+  | Match p -> pmatch e p
+
+and pmatch e p = match e, p with
+  | L(e, t), MLeft phi -> fcheck e phi
+  | R(t, e), MRight phi -> fcheck e phi
+  | Tuple es, MTuple phis ->
+    List.for_all (fun (n, phi) -> fcheck (List.assoc n es) phi) phis
+  | _ -> false
 
 let rec rcheck e = function
   | RVoid -> false
