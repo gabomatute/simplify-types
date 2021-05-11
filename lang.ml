@@ -59,7 +59,7 @@ let rec log (Prod ts) = match ts with
     if t' = t then Some(t, i + 1) else None
 
 
-(* type synthesis *)
+(* type synthesis and evaluation *)
 
 exception IllTyped
 let rec ssyn ?(vars = []) e =
@@ -92,3 +92,71 @@ let rec ssyn ?(vars = []) e =
   with
   | Match_failure _ -> raise IllTyped
   | Not_found -> raise IllTyped
+
+let rec eval ?(vars = []) e =
+  try match e with
+  | V n -> List.assoc n vars
+  | L(e, t) -> L(eval ~vars e, t)
+  | R(t, e) -> R(t, eval ~vars e)
+  | Case(e, (ln, le), (rn, re)) ->
+    begin match eval ~vars e with
+      | L(e, t) -> eval ~vars:((ln, e) :: vars) le
+      | R(t, e) -> eval ~vars:((rn, e) :: vars) re
+      | _ -> raise IllTyped
+    end
+  | Tuple es ->
+    Tuple(List.map (fun (n, e) -> (n, eval ~vars e)) es)
+  | Proj(n, e) -> 
+    let ts = let Tuple ts = eval ~vars e in ts in
+    List.assoc n ts
+  | Ls(t, es) ->
+    Ls(t, List.map (eval ~vars) es)
+  | Map((n, f), e) ->
+    let t, es = let Ls(t, es) = eval ~vars e in t, es in
+    let ts = List.map (fun (n, e) -> (n, ssyn e)) vars in
+    let es = List.map (fun e -> eval ~vars:((n, e) :: vars) f) es in
+    Ls(ssyn ~vars:((n, t) :: ts) f, es)
+  | Append(l, r) ->
+    let t, ll = let Ls l = eval ~vars l in l in
+    let t, rl = let Ls r = eval ~vars r in r in
+    Ls(t, ll @ rl)
+  | Flatten(n, e) ->
+    let t, l = let Ls l = eval ~vars e in l in
+    let t, i = let Some(t, i) = log t in t, i in
+    Ls(t, List.concat_map begin fun e ->
+        let es = let Tuple es = e in es in
+        List.map snd es
+      end l)
+  with
+  | Match_failure _ -> raise IllTyped
+  | Not_found -> raise IllTyped
+
+
+(* constraint checking *)
+
+let rec ncompute e : number -> int =
+  let rec len ?(e = e) = function
+    | Dot(p, x) -> let Tuple es = e in len ~e:(List.assoc x es) p
+    | Val -> let Ls(t, l) = e in List.length l in
+  List.fold_left (fun acc (p, c) -> acc + c * len p) 0
+
+let rec fcheck e = function
+  | False -> false | True -> true
+  | Or(l, r) -> fcheck e l || fcheck e r
+  | LEq(l, r) -> ncompute e l <= ncompute e r
+
+let rec rcheck e = function
+  | RVoid -> false
+  | RSum(lt, rt) -> begin match e with
+    | L(e, t) -> rcheck e lt
+    | R(t, e) -> rcheck e rt
+    | _ -> assert false
+    end
+  | RProd rts ->
+    let es = let Tuple es = e in es in
+    List.for_all (fun (n, rt) -> rcheck (List.assoc n es) rt) rts
+  | RLst rt ->
+    let l = let Ls(t, l) = e in l in
+    List.for_all (fun e -> rcheck e rt) l
+  | Refine(rt, formula) ->
+    rcheck e rt && fcheck e formula
