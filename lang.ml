@@ -58,6 +58,13 @@ let rec log (Prod ts) = match ts with
     let* t, i = log (Prod ts) in
     if t' = t then Some(t, i + 1) else None
 
+let rec bare = function
+  | RVoid -> Void
+  | RSum(l, r) -> Sum(bare l, bare r)
+  | RProd ts -> Prod(List.map (fun (n, t) -> (n, bare t)) ts)
+  | RLst t -> Lst(bare t)
+  | Refine(t, phi) -> bare t
+
 
 (* type synthesis and evaluation *)
 
