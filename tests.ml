@@ -63,6 +63,10 @@ module Parser = struct
     ; "{ <> | T V 1len val <= 1len val }"
     ; "{ <> | 1len val <= 1len val V T }"
     ; "{ <> | 4len val + 2len val.x.myPath <= 23len val.zzz V T }"
+    ; "{ <> | match Left T }"
+    ; "{ <> | match Left match Right F }"
+    ; "{ <> | match Left match Right F }"
+    ; "{ <> | match <x ~ F, y ~ match Right T> }"
     ]
 
   let run () =

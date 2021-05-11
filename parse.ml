@@ -81,6 +81,17 @@ let len_keyword =
 let plus_symbol =
   make_token "+"
 
+(* Patterns *)
+
+let left_keyword =
+  make_token "Left"
+
+let right_keyword =
+  make_token "Right"
+
+let prod_constrains_symbol =
+  make_token "~"
+
 (* Formulae *)
 
 let false_keyword =
@@ -88,6 +99,9 @@ let false_keyword =
 
 let true_keyword =
   make_token "T"
+
+let match_keyword =
+  make_token "match"
 
 let leq_symbol =
   make_token "<="
@@ -190,7 +204,43 @@ let number : number parser =
 
 (* Formulae *)
 
-let atom : formula parser =
+let rec pattern' : unit -> pattern parser = fun () ->
+  succeed (fun p -> p)
+    |= one_of
+         [ in_context "left pattern"
+             ( succeed (fun phi -> MLeft phi)
+                 |. keyword left_keyword
+                 |. spaces1
+                 |= lazily formula'
+             )
+         ; in_context "right pattern"
+             ( succeed (fun phi -> MRight phi)
+                 |. keyword right_keyword
+                 |. spaces1
+                 |= lazily formula'
+             )
+         ; in_context "product pattern"
+             ( map (fun branches -> MTuple branches)
+               ( sequence
+                   ~start:prod_left_symbol
+                   ~separator:prod_sep_symbol
+                   ~endd:prod_right_symbol
+                   ~spaces:spaces
+                   ~item:
+                     ( succeed (fun name r -> (name, r))
+                         |= variable_name
+                         |. spaces
+                         |. symbol prod_constrains_symbol
+                         |. spaces
+                         |= lazily formula'
+                     )
+                   ~trailing:Forbidden
+               )
+             )
+         ]
+    |. spaces
+
+and atom' : unit -> formula parser = fun () ->
   succeed (fun a -> a)
     |= one_of
          [ in_context "false formula"
@@ -207,11 +257,17 @@ let atom : formula parser =
                  |. spaces
                  |= number
              )
+          ; in_context "match formula"
+             ( succeed (fun p -> Match p)
+                 |. keyword match_keyword
+                 |. spaces1
+                 |= lazily pattern'
+             )
          ]
     |. spaces
 
-let disjunction_clause : formula parser =
-  chainr1 "disjunction" atom
+and disjunction_clause' : unit -> formula parser = fun () ->
+  chainr1 "disjunction" (lazily atom')
     ( ignore_with (fun phi1 phi2 -> Or (phi1, phi2))
         ( succeed ()
             |. symbol or_symbol
@@ -219,8 +275,11 @@ let disjunction_clause : formula parser =
         )
     )
 
+and formula' : unit -> formula parser = fun () ->
+  lazily disjunction_clause'
+
 let formula : formula parser =
-  disjunction_clause
+  lazily formula'
 
 (* Refinement types *)
 
