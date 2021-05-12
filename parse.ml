@@ -356,8 +356,9 @@ let parse parser s =
     | Error dead_ends ->
       let show_dead_end dead_end =
         match dead_end.Bark.problem with
-          | Expecting s -> "expecting '" ^ s ^ "'" in
+          | Expecting s -> "'" ^ s ^ "'" in
       let msg = dead_ends
           |> List.map show_dead_end
-          |> String.concat ", " in
+          |> String.concat " | "
+          |> (^) "Expecting " in
       Error msg
