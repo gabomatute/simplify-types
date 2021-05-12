@@ -45,6 +45,8 @@ and prewrite i = function
   | MRight phi -> MRight(frewrite i phi)
   | MTuple phis ->
       MTuple(List.map (fun (n, phi) -> (n, frewrite i phi)) phis)
+  | MNil -> MNil
+  | MCons(phi, phis) -> MCons(frewrite i phi, frewrite i phis)
 
 let rearrange ((l, r): number * number) : number * number =
   let rec eqsplit = function
@@ -120,6 +122,17 @@ let rec simplify = function
         | None -> (n, t)
       end ts) in
     simplify rt
+  | Refine(rt, Match(MNil)) ->
+    let rt = let RLst t = rt in t in
+    let i v = Nil(bare rt) in
+    (i, Prod [])
+  | Refine(rt, Match(MCons(phi, phis))) ->
+    let n1, n2 = "hd", "tl" in
+    let rt = let RLst t = rt in t in
+    let i1, t1 = simplify (Refine(rt, phi)) in
+    let i2, t2 = simplify (Refine(RLst rt, phis)) in
+    let i v = Cons(i1(Proj(n1, v)), i2(Proj(n2, v))) in
+    (i, Prod [(n1, t1); (n2, t2)])
   | Refine (rt, (LEq(n1, n2) as phi)) ->
     let i, t = simplify rt in
     let n1, n2 = let LEq(l, r) = frewrite i phi in l, r in

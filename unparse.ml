@@ -49,6 +49,7 @@ and spattern = function
   | MLeft phi -> "Left " ^ sformula phi
   | MRight phi -> "Right " ^ sformula phi
   | MTuple phis -> "<" ^ snamed ~v:"~" sformula phis ^ ">"
+  | MNil -> "[]" | MCons(phi, phis) -> sformula phi ^ "::" ^ sformula phis
 
 let rec srefine = function
   | RSum(l, r) -> srefine l ^ " + " ^ srefine r

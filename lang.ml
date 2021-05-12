@@ -31,6 +31,7 @@ and pattern =
   | MLeft of formula
   | MRight of formula
   | MTuple of (name * formula) list
+  | MNil | MCons of formula * formula
 
 type refine = RVoid
   | RSum of refine * refine
@@ -175,6 +176,11 @@ and pmatch e p = try match p with
   | MRight phi -> let R(t, e) = e in fcheck e phi
   | MTuple phis -> let es = let Tuple es = e in es in
     List.for_all (fun (n, phi) -> fcheck (List.assoc n es) phi) phis
+  | MNil -> let Ls(t, l) = e in l = []
+  | MCons(phi, phis) ->
+    let t, l = let Ls(t, l) = e in t, l in
+    let e, es = let (e :: es) = l in e, es in
+    fcheck e phi && fcheck (Ls(t, es)) phis
   with
   | Match_failure _ -> false
 
