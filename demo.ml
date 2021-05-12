@@ -19,7 +19,7 @@ let validate rt i t =
 
 let showcase input =
   print_endline ("refine = " ^ input ^ "");
-  match Bark.run Parse.refine input with
+  match parse refine input with
     | Ok rt ->
         let i, t = simplify rt in
         print_endline ("simple = " ^ ssimple t);
@@ -36,8 +36,8 @@ let showcase input =
             print_endline ("out = " ^ sexp ssimple out);
         end;
         print_newline ()
-    | Error _ ->
-        print_endline ("!!! Parse failure: fix example")
+    | Error msg ->
+        print_endline ("!!! Parse failure: " ^ msg)
 
 let examples =
   [ "<>"

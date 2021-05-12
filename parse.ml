@@ -349,3 +349,15 @@ and refine' : unit -> refine parser = fun () ->
 
 let refine : refine parser =
   lazily refine'
+
+let parse parser s =
+  match Bark.run parser s with
+    | Ok r -> Ok r
+    | Error dead_ends ->
+      let show_dead_end dead_end =
+        match dead_end.Bark.problem with
+          | Expecting s -> "expecting '" ^ s ^ "'" in
+      let msg = dead_ends
+          |> List.map show_dead_end
+          |> String.concat ", " in
+      Error msg
