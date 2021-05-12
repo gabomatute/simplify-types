@@ -102,73 +102,71 @@ let rec simplify = function
     let i2, t2 = simplify (Refine(t, phi2)) in
     let i v = Case(v, ("x1", i1(V "x1")), ("x2", i2(V "x2"))) in
     (i, Sum(t1, t2))
-  | Refine(RSum(rt1, rt2), Match(MLeft phi)) ->
+  | Refine(rt, Match(MLeft phi)) ->
+    let rt1, rt2 = let RSum(l, r) = rt in l, r in
     let i, t = simplify (Refine(rt1, phi)) in
     let i' v = L(v, bare rt2) in
     (i >> i', t)
-  | Refine(RSum(rt1, rt2), Match(MRight phi)) ->
+  | Refine(rt, Match(MRight phi)) ->
+    let rt1, rt2 = let RSum(l, r) = rt in l, r in
     let i, t = simplify (Refine(rt2, phi)) in
     let i' v = R(bare rt1, v) in
     (i >> i', t)
-  | Refine(RProd ts, Match(MTuple phis)) ->
+  | Refine(rt, Match(MTuple phis)) ->
+    let ts = let RProd ts = rt in ts in
     let rt = RProd(List.map begin fun (n, t) ->
       match List.assoc_opt n phis with
         | Some phi -> (n, Refine(t, phi))
         | None -> (n, t)
       end ts) in
     simplify rt
-  | Refine(t, Match p) ->
-    assert false
   | Refine (rt, (LEq(n1, n2) as phi)) ->
     let i, t = simplify rt in
-    begin match frewrite i phi with
-      | LEq(n1, n2) ->
-        let nu, nv = rearrange (n1, n2) in
-        let (pu, cu), (qv, dv) =
-          List.split nu, List.split nv in
-        let tu =
-          let power t i =
-            if i = 1 then t else power t i in
-          List.map begin fun (pu, cu) ->
-            Prod(List.mapi begin fun i (qv, dv) ->
-                let luv = lcm cu dv in
-                let au = let Lst au = tselect t pu in au in
-                let bv = let Lst bv = tselect t qv in bv in
-                (string_of_int i, Lst(Prod(["α", power au (luv / cu);
-                                            "β", power bv (luv / dv)])))
-              end nv)
-          end nu in
-        let tv =
-          List.map (tselect t) qv in
-        let concat t = function
-          | hd :: tl -> List.fold_left (fun l r -> Append(l, r)) hd tl
-          | [] -> Ls(t, []) in
-        let epu v =
-          List.map2 begin fun tu (pu, cu) ->
-            concat tu (List.mapi begin fun i (qv, dv) ->
-                let luv'cu = lcm cu dv / cu in
-                let extract = Proj(string_of_int i, proj pu v) in
-                let rebuilt = Map(("x", Proj("α", V "x")), extract) in
-                if luv'cu = 1 then rebuilt else
-                Flatten(luv'cu, rebuilt)
-              end nv)
-          end tu nu in
-        let eqv v =
-          List.mapi begin fun i (qv, dv) ->
-            let tv = List.nth tv i in
-            concat tv ((List.map begin fun (pu, cu) ->
-                let luv'dv = lcm cu dv / dv in
-                let extract = Proj(string_of_int i, proj pu v) in
-                let rebuilt = Map(("x", Proj("β", V "x")), extract) in
-                if luv'dv = 1 then rebuilt else
-                Flatten(luv'dv, rebuilt)
-              end nu) @ [proj qv v])
-          end nv in
-        let t' = twith (List.combine pu tu @ List.combine qv tv) t in
-        let i' v = ebuild (List.combine pu (epu v) @ List.combine qv (eqv v)) ~v rt in
-        (i' >> i, t')
-      | _ -> assert false
-      end
+    let n1, n2 = let LEq(l, r) = frewrite i phi in l, r in
+    let nu, nv = rearrange (n1, n2) in
+    let (pu, cu), (qv, dv) =
+      List.split nu, List.split nv in
+    let tu =
+      let power t i =
+        if i = 1 then t else power t i in
+      List.map begin fun (pu, cu) ->
+        Prod(List.mapi begin fun i (qv, dv) ->
+            let luv = lcm cu dv in
+            let au = let Lst au = tselect t pu in au in
+            let bv = let Lst bv = tselect t qv in bv in
+            (string_of_int i, Lst(Prod(["α", power au (luv / cu);
+                                        "β", power bv (luv / dv)])))
+          end nv)
+      end nu in
+    let tv =
+      List.map (tselect t) qv in
+    let concat t = function
+      | hd :: tl -> List.fold_left (fun l r -> Append(l, r)) hd tl
+      | [] -> Ls(t, []) in
+    let epu v =
+      List.map2 begin fun tu (pu, cu) ->
+        concat tu (List.mapi begin fun i (qv, dv) ->
+            let luv'cu = lcm cu dv / cu in
+            let extract = Proj(string_of_int i, proj pu v) in
+            let rebuilt = Map(("x", Proj("α", V "x")), extract) in
+            if luv'cu = 1 then rebuilt else
+            Flatten(luv'cu, rebuilt)
+          end nv)
+      end tu nu in
+    let eqv v =
+      List.mapi begin fun i (qv, dv) ->
+        let tv = List.nth tv i in
+        concat tv ((List.map begin fun (pu, cu) ->
+            let luv'dv = lcm cu dv / dv in
+            let extract = Proj(string_of_int i, proj pu v) in
+            let rebuilt = Map(("x", Proj("β", V "x")), extract) in
+            if luv'dv = 1 then rebuilt else
+            Flatten(luv'dv, rebuilt)
+          end nu) @ [proj qv v])
+      end nv in
+    let t' = twith (List.combine pu tu @ List.combine qv tv) t in
+    let i' v = ebuild (List.combine pu (epu v) @ List.combine qv (eqv v)) ~v rt in
+    (i' >> i, t')
   | Refine(_, False) | RVoid ->
     let i v = assert false in
     (i, Void)
