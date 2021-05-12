@@ -1,23 +1,36 @@
 # Potential Applications
+Below are some examples of potential applications of this technique.
 
+**Note:** `output` is automatically generated from the latest version of the tool.
 
 ## Guarantee Correctness
-Make illegal states unrepresentable by adding constraints and generating a new type.
+Make illegal states unrepresentable by specifying constraints to generate a new type.
 ```
+# e.g. Given a list of questions and a list of answers, ensure they have the same length.
 input  = { { <q:[<>], a:[<>]> | 1len val.q <= 1len val.a } | 1len val.a <= 1len val.q }
 output = <q:<0:[<α:<>, β:<>>]>, a:<>>
 ```
 
-## Efficiency
-Use known properties to automatically prune unused states from your types.
+## Guarantee Performance
+Ensure certain algorithmic assumptions hold when implementing efficient data structures.
 ```
+# e.g. Okasaki functional requires front to be shorter than the back for amortized O(1) operations.
+input  = { <front:[<>], back:[<>]> | 1len val.front <= 1len val.back }
+output = <front:<0:[<α:<>, β:<>>]>, back:[<>]>
+```
+
+## Improve Performance
+Potentially could use known properties to automatically prune unused states from your types.
+```
+# e.g. Automatically drop type union tags and empty list pointers when uneeded.
 input  = { [<>] + [<>] | match(Left 1len val <= 0) }
 output = <>
 ```
 
-## Remove Partiality
-Make libraries more user-friendly, less error prone by encoding constraints into any type system.
+## Improve Interfaces
+Design library interfaces that can be less error prone by encoding constraints into the type system.
 ```
+# e.g. Encode that a random choice function requires a non-empty list of choices.
 input  = { <choices:[<>]> | match(<choices~match(T::T)>) }
 output = <choices:<hd:<>, tl:[<>]>>
 ```
