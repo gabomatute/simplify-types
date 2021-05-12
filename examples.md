@@ -17,3 +17,7 @@ output = <>
 
 ## Remove Partiality
 Make libraries more user-friendly, less error prone by encoding constraints into any type system.
+```
+input  = { <choices:[<>]> | match(<choices~match(T::T)>) }
+output = <choices:<hd:<>, tl:[<>]>>
+```

@@ -32,4 +32,4 @@ let () =
   print_newline ();
   print_endline ("## Remove Partiality");
   print_endline ("Make libraries more user-friendly, less error prone by encoding constraints into any type system.");
-  (* showcase "{choices:[<>] | 1 <= 1len val.choices}"; *)
+  showcase "{<choices:[<>]> | match(<choices ~ match(T :: T)>)}";

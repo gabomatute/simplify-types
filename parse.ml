@@ -92,6 +92,12 @@ let right_keyword =
 let prod_constrains_symbol =
   make_token "~"
 
+let nil_symbol =
+  make_token "[]"
+
+let cons_symbol =
+  make_token "::"
+
 (* Formulae *)
 
 let false_keyword =
@@ -242,6 +248,17 @@ let rec pattern' : unit -> pattern parser = fun () ->
                      )
                    ~trailing:Forbidden
                )
+             )
+         ; in_context "nil pattern"
+             ( ignore_with MNil (symbol nil_symbol)
+             )
+         ; in_context "cons pattern"
+             ( succeed (fun phi phis -> MCons(phi, phis))
+                 |= lazily formula'
+                 |. spaces
+                 |. symbol cons_symbol
+                 |. spaces
+                 |= lazily formula'
              )
          ]
     |. spaces
