@@ -96,11 +96,11 @@ let rec simplify = function
   | Refine(RSum(rt1, rt2), Match(MLeft phi)) ->
     let i, t = simplify (Refine(rt1, phi)) in
     let i' v = L(v, bare rt2) in
-    (i' >> i, t)
+    (i >> i', t)
   | Refine(RSum(rt1, rt2), Match(MRight phi)) ->
     let i, t = simplify (Refine(rt2, phi)) in
     let i' v = R(bare rt1, v) in
-    (i' >> i, t)
+    (i >> i', t)
   | Refine(RProd ts, Match(MTuple phis)) ->
     let rt = RProd(List.map begin fun (n, t) ->
       match List.assoc_opt n phis with
