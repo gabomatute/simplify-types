@@ -28,7 +28,7 @@ let () =
   print_newline ();
   print_endline ("## Efficiency");
   print_endline ("Use known properties to automatically prune unused states from your types.");
-  showcase "{ [<>] + [<>] | match (Left len val <= 0len val) }";
+  showcase "{ [<>] + [<>] | match (Left len val <= 0) }";
   print_newline ();
   print_endline ("## Remove Partiality");
   print_endline ("Make libraries more user-friendly, less error prone by encoding constraints into any type system.");

@@ -48,13 +48,13 @@ i(val) = val
 validating...
 = OK
 
-refine = { <a:[<>]> | 0len val.a <= len val.a }
+refine = { <a:[<>]> | 0 <= len val.a }
 simple = <a:[<>]>
 i(val) = val
 validating...
 = OK
 
-refine = { <a:[<>]> | len val.a <= 0len val.a}
+refine = { <a:[<>]> | len val.a <= 0 }
 simple = <a:<>>
 i(val) = <
     a = []
