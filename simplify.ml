@@ -21,18 +21,20 @@ let rec slen ?(s = []) = function
   | L _ | R _ | Case _ -> assert false
   | Proj(n, e) -> slen ~s:(n :: s) e
   | Tuple es -> let n :: s = s in slen ~s (List.assoc n es)
-  | Ls _ | Nil _ | Cons _ -> assert false
+  | Ls _ -> assert false
+  | Nil t -> const 0
+  | Cons(e, es) -> add (const 1) (slen ~s es)
   | Append(e1, e2) -> add (slen ~s e1) (slen ~s e2)
   | Flatten(c, e) -> mult c (slen ~s e)
   | Map((x, e1), e2) -> slen ~s e2
   | V "val" -> len (path s)
   | V _ -> assert false
 
-let rec nrewrite i n =
+let rec nrewrite i ((c, n): number) =
   let e = i (V "val") in
   let n' = function
     | p, c -> mult c (slen ~s:(stack p) e) in
-  List.fold_left add [] (List.map n' n)
+  List.fold_left add (const c) (List.map n' n)
 
 let rec frewrite i = function
   | (False | True) as phi -> phi
@@ -55,7 +57,9 @@ let rearrange ((l, r): number * number) : number * number =
       if c < 0 then l, (p, -c) :: r else
       if c > 0 then (p, c) :: l, r else
       l, r in
-  eqsplit (add l (mult (-1) r))
+  let c, n = add l (mult (-1) r) in
+  let l, r = eqsplit n in
+  (max 0 c, l), (max 0 (-c), r)
 
 let rec twith pt ?(p = Val) t =
   match List.assoc_opt p pt with
@@ -137,6 +141,7 @@ let rec simplify = function
     let i, t = simplify rt in
     let n1, n2 = let LEq(l, r) = frewrite i phi in l, r in
     let nu, nv = rearrange (n1, n2) in
+    let (0, nu), (0, nv) = nu, nv in
     let (pu, cu), (qv, dv) =
       List.split nu, List.split nv in
     let tu =

@@ -34,9 +34,10 @@ let rec spath = function
   | Dot(p, x) -> spath p ^ "." ^ x
   | Val -> "val"
 
-let snumber (n: number) =
-  String.concat " + " (List.map begin function
-    | p, c -> string_of_int c ^ "len " ^ spath p
+let snumber ((c, n): number) =
+  let sint i s = if i <> 0 then string_of_int i ^ s else "" in
+  sint c " + " ^ String.concat " + " (List.map begin function
+    | p, c -> sint c ("len " ^ spath p)
   end n)
 
 let rec sformula = function

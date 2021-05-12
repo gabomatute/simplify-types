@@ -11,7 +11,7 @@ output = <q:<0:[<α:<>, β:<>>]>, a:<>>
 ## Efficiency
 Use known properties to automatically prune unused states from your types.
 ```
-input  = { [<>] + [<>] | match(Left 1len val <= 0len val) }
+input  = { [<>] + [<>] | match(Left 1len val <= ) }
 output = <>
 ```
 

@@ -19,7 +19,7 @@ type path = Val
   | Dot of path * name
 
 type number =
-  (path * int) list
+  int * (path * int) list
 
 type formula =
   | False | True
@@ -44,14 +44,17 @@ type refine = RVoid
 
 open Utils
 
+let const i : number =
+  (i, [])
+
 let len p : number =
-  [(p, 1)]
+  (0, [(p, 1)])
 
-let add (n: number) : number -> number =
-  List.fold_left (fun n (p, c) -> assoc_update ((+) c) p ~v:0 n) n
+let add ((c, n): number) ((d, m): number) : number =
+  (c + d, List.fold_left (fun n (p, c) -> assoc_update ((+) c) p ~v:0 n) n m)
 
-let mult c : number -> number =
-  List.map (fun (p, ci) -> (p, c * ci))
+let mult c ((d, n): number) : number =
+  (c * d, List.map (fun (p, ci) -> (p, c * ci)) n)
 
 
 (* type operators *)
@@ -159,11 +162,11 @@ let rec eval ?(vars = []) e =
 
 (* constraint checking *)
 
-let rec ncompute e : number -> int =
+let rec ncompute e ((c, n): number) =
   let rec len ?(e = e) = function
     | Dot(p, x) -> let Tuple es = e in len ~e:(List.assoc x es) p
     | Val -> let Ls(t, l) = e in List.length l in
-  List.fold_left (fun acc (p, c) -> acc + c * len p) 0
+  c + List.fold_left (fun acc (p, c) -> acc + c * len p) 0 n
 
 let rec fcheck e = function
   | False -> false | True -> true

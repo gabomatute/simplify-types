@@ -201,18 +201,36 @@ let scaled_length : (path * int) parser =
     |= path
 
 let number : number parser =
-  map List.rev @@
-    chainl1 "number"
-      ( succeed (fun n -> [n])
-          |= scaled_length
-      )
-      scaled_length
-      ( ignore_with (fun ns n -> n :: ns)
-          ( succeed ()
-              |. symbol plus_symbol
-              |. spaces
-          )
-      )
+  let affine : int parser =
+    succeed (fun a -> a)
+      |= int (Expecting "affine constant")
+      |. spaces
+      |. symbol plus_symbol
+      |. spaces
+  in
+  let linear : (path * int) list parser =
+    map List.rev @@
+      chainl1 "number"
+        ( succeed (fun n -> [n])
+            |= scaled_length
+        )
+        scaled_length
+        ( ignore_with (fun ns n -> n :: ns)
+            ( succeed ()
+                |. symbol plus_symbol
+                |. spaces
+            )
+        )
+  in
+  one_of
+    [ backtrackable
+        ( succeed (fun affine linear -> (affine, linear))
+            |= affine
+            |= linear
+        )
+    ; succeed (fun linear -> (0, linear))
+        |= linear
+    ]
 
 (* Formulae *)
 

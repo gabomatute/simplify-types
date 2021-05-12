@@ -52,6 +52,10 @@ let parser_tests =
   ; "{ <> | match(Left match(Right F)) }"
   ; "{ <> | match(Left match(Right F)) }"
   ; "{ <> | match(<x ~ F, y ~ match(Right T)>) }"
+  ; "{ <> | 1len val <= 1len val}"
+  ; "{ <> | 4 + 1len val <= 1len val}"
+  ; "{ <> | 1len val <= 2 + 1len val}"
+  ; "{ <> | 8 + 1len val <= 2 + 1len val}"
   ]
 
 let () =
