@@ -18,13 +18,15 @@ let rec path ?(p = Val) = function
   | [] -> p
 
 let rec slen ?(s = []) = function
+  | L _ | R _ | Case _ -> assert false
   | Proj(n, e) -> slen ~s:(n :: s) e
   | Tuple es -> let n :: s = s in slen ~s (List.assoc n es)
-  | Append(e1, e2) -> add (slen e1) (slen e2)
-  | Flatten(c, e) -> mult c (slen e)
-  | Map((x, e1), e2) -> slen e2
+  | Ls _ | Nil _ | Cons _ -> assert false
+  | Append(e1, e2) -> add (slen ~s e1) (slen ~s e2)
+  | Flatten(c, e) -> mult c (slen ~s e)
+  | Map((x, e1), e2) -> slen ~s e2
   | V "val" -> len (path s)
-  | _ -> assert false
+  | V _ -> assert false
 
 let rec nrewrite i n =
   let e = i (V "val") in
