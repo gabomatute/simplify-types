@@ -180,9 +180,9 @@ let variable_name : string parser =
 let path : path parser =
   succeed (fun p -> p)
     |= chainl1 "path"
-		     ( ignore_with Val (keyword val_keyword)
-		     )
-		     variable_name
+         ( ignore_with Val (keyword val_keyword)
+         )
+         variable_name
          ( ignore_with (fun base ext -> Dot (base, ext))
              ( succeed ()
                  |. symbol path_sep_symbol
@@ -193,24 +193,21 @@ let path : path parser =
 
 (* Numbers *)
 
+let unscaled_length : path parser =
+  succeed (fun p -> p)
+    |. keyword len_keyword
+    |. spaces1
+    |= path
+
 let scaled_length : (path * int) parser =
-	succeed (fun n p -> (p, n))
-		|= one_of
+  succeed (fun n p -> (p, n))
+    |= one_of
          [ int (Expecting "scalar")
          ; succeed 1
          ]
-		|. keyword len_keyword
-		|. spaces1
-    |= path
+    |= unscaled_length
 
 let number : number parser =
-  let affine : int parser =
-    succeed (fun a -> a)
-      |= int (Expecting "affine constant")
-      |. spaces
-      |. symbol plus_symbol
-      |. spaces
-  in
   let linear : (path * int) list parser =
     map List.rev @@
       chainl1 "number"
@@ -225,14 +222,29 @@ let number : number parser =
             )
         )
   in
+  let optionally_plus_linear : (path * int) list parser =
+    one_of
+      [ succeed (fun l -> l)
+          |. symbol plus_symbol
+          |. spaces
+          |= linear
+      ; succeed []
+      ]
+  in
   one_of
-    [ backtrackable
-        ( succeed (fun affine linear -> (affine, linear))
-            |= affine
-            |= linear
-        )
-    ; succeed (fun linear -> (0, linear))
-        |= linear
+    [ succeed (fun n f -> f n)
+        |= int (Expecting "constant")
+        |= one_of
+             [ succeed (* clen p [+ linear] *)
+                (fun first_path linear n -> (0, (first_path, n) :: linear))
+                 |= unscaled_length
+                 |= optionally_plus_linear
+             ; succeed (fun linear n -> (n, linear)) (* c [+ linear] *)
+                 |. spaces
+                 |= optionally_plus_linear
+             ]
+    ; succeed (fun l -> (0, l))
+        |= linear (* lenp + linear *)
     ]
 
 (* Formulae *)

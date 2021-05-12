@@ -35,10 +35,13 @@ let rec spath = function
   | Val -> "val"
 
 let snumber ((c, n): number) =
-  let sint i s = if i <> 0 then string_of_int i ^ s else "" in
-  sint c " + " ^ String.concat " + " (List.map begin function
-    | p, c -> sint c ("len " ^ spath p)
-  end n)
+  if n = [] then
+    string_of_int c
+  else
+    let sint i s = if i <> 0 then string_of_int i ^ s else "" in
+    sint c " + " ^ String.concat " + " (List.map begin function
+      | p, c -> sint c ("len " ^ spath p)
+    end n)
 
 let rec sformula = function
   | False -> "F" | True -> "T"

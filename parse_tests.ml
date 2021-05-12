@@ -58,6 +58,11 @@ let parser_tests =
   ; "{ <> | 1len val <= 2 + 1len val}"
   ; "{ <> | 8 + 1len val <= 2 + 1len val}"
   ; "{ <> | 8 + len val + 4len val <= 2 + 2len val + len val.zz}"
+  ; "{ <> | 1 <= 2 }"
+  ; "{ <> | 3len val <= 2 + 2len val }"
+  ; "{ <> | len val + 5len val <= 2len val }"
+  ; "{ <> | 3len val <= 0 }"
+  ; "{ <> | 1 <= 0 }"
   ]
 
 let () =
