@@ -195,7 +195,10 @@ let path : path parser =
 
 let scaled_length : (path * int) parser =
 	succeed (fun n p -> (p, n))
-		|= int (Expecting "scalar")
+		|= one_of
+         [ int (Expecting "scalar")
+         ; succeed 1
+         ]
 		|. keyword len_keyword
 		|. spaces1
     |= path

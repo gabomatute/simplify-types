@@ -2,13 +2,14 @@ open Utils
 open Parse
 open Unparse
 
-let remove_spaces =
+let normalize =
   Str.global_replace (Str.regexp " ") ""
+    >> Str.global_replace (Str.regexp "1len") "len"
 
 let is_equivalent input output =
   String.equal
-    (remove_spaces input)
-    (remove_spaces output)
+    (normalize input)
+    (normalize output)
 
 let parse_then_print input =
   print_endline ("Parsing '" ^ input ^ "'.");
@@ -56,6 +57,7 @@ let parser_tests =
   ; "{ <> | 4 + 1len val <= 1len val}"
   ; "{ <> | 1len val <= 2 + 1len val}"
   ; "{ <> | 8 + 1len val <= 2 + 1len val}"
+  ; "{ <> | 8 + len val + 4len val <= 2 + 2len val + len val.zz}"
   ]
 
 let () =
