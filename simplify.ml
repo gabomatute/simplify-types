@@ -36,6 +36,13 @@ let rec frewrite i = function
   | (False | True) as phi -> phi
   | Or(phi1, phi2) -> Or(frewrite i phi1, frewrite i phi2)
   | LEq(n1, n2) -> LEq(nrewrite i n1, nrewrite i n2)
+  | Match p -> Match(prewrite i p)
+
+and prewrite i = function
+  | MLeft phi -> MLeft(frewrite i phi)
+  | MRight phi -> MRight(frewrite i phi)
+  | MTuple phis ->
+      MTuple(List.map (fun (n, phi) -> (n, frewrite i phi)) phis)
 
 let rearrange ((l, r): number * number) : number * number =
   let rec eqsplit = function
