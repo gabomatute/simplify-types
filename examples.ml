@@ -24,11 +24,11 @@ let () =
   print_newline ();
   print_endline ("## Guarantee Correctness");
   print_endline ("Make illegal states unrepresentable by adding constraints and generating a new type.");
-  showcase "{{<q:[<>], a:[<>]> | 1len val.q <= 1len val.a} | 1len val.a <= 1len val.q}";
+  showcase "{{<q:[<>], a:[<>]> | len val.q <= len val.a} | len val.a <= len val.q}";
   print_newline ();
   print_endline ("## Efficiency");
   print_endline ("Use known properties to automatically prune unused states from your types.");
-  showcase "{ [<>] + [<>] | match (Left 1len val <= 0len val) }";
+  showcase "{ [<>] + [<>] | match (Left len val <= 0len val) }";
   print_newline ();
   print_endline ("## Remove Partiality");
   print_endline ("Make libraries more user-friendly, less error prone by encoding constraints into any type system.");

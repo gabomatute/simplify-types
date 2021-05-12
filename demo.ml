@@ -48,16 +48,16 @@ let examples =
   ; "<a:[<>]>"
   ; "{ <> | T }"
   ; "<a:[<>], b:[<>]>"
-  ; "{ <a:[<>]> | 0len val.a <= 1len val.a }"
-  ; "{ <a:[<>]> | 1len val.a <= 0len val.a}"
-  ; "{ <a:[<>], b:[<>]> | 1len val.a <= 1len val.b}"
+  ; "{ <a:[<>]> | 0len val.a <= len val.a }"
+  ; "{ <a:[<>]> | len val.a <= 0len val.a}"
+  ; "{ <a:[<>], b:[<>]> | len val.a <= len val.b}"
   ; "{ <a:[<>], b:[<>]> | 2len val.a <= 3len val.b}"
-  ; "{ <a:[<>], b:[<>], c:[<>]> | 1len val.a + 1len val.b <= 1len val.c}"
-  ; "{ <a:[<>], b:[<>], c:[<>]> | 1len val.a <= 1len val.b + 1len val.c}"
+  ; "{ <a:[<>], b:[<>], c:[<>]> | len val.a + len val.b <= len val.c}"
+  ; "{ <a:[<>], b:[<>], c:[<>]> | len val.a <= len val.b + len val.c}"
   ; "{ <a:[<>], b:[<>], c:[<>]> | 2len val.a + 3len val.b <= 5len val.c}"
   ; "{ <a:[<>], b:[<>], c:[<>]> | 5len val.a <= 2len val.b + 3len val.c}"
-  ; "{ { <a:[<>], b:[<>]> | 1len val.a <= 1len val.b} | 1len val.b <= 1len val.a}"
-  ; "{ <a:[<>], b:[<>], c:[<>]> | 1len val.a <= 1len val.b V 1len val.a <= 1len val.c }"
+  ; "{ { <a:[<>], b:[<>]> | len val.a <= len val.b} | len val.b <= len val.a}"
+  ; "{ <a:[<>], b:[<>], c:[<>]> | len val.a <= len val.b V len val.a <= len val.c }"
   ]
 
 let repl () =

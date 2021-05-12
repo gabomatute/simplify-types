@@ -48,13 +48,13 @@ i(val) = val
 validating...
 = OK
 
-refine = { <a:[<>]> | 0len val.a <= 1len val.a }
+refine = { <a:[<>]> | 0len val.a <= len val.a }
 simple = <a:[<>]>
 i(val) = val
 validating...
 = OK
 
-refine = { <a:[<>]> | 1len val.a <= 0len val.a}
+refine = { <a:[<>]> | len val.a <= 0len val.a}
 simple = <a:<>>
 i(val) = <
     a = []
@@ -62,7 +62,7 @@ i(val) = <
 validating...
 = OK
 
-refine = { <a:[<>], b:[<>]> | 1len val.a <= 1len val.b}
+refine = { <a:[<>], b:[<>]> | len val.a <= len val.b}
 simple = <a:<0:[<α:<>, β:<>>]>, b:[<>]>
 i(val) = <
     a = map (λx. proj_{α} x) proj_{0} proj_{a} val,
@@ -80,7 +80,7 @@ i(val) = <
 validating...
 = OK
 
-refine = { <a:[<>], b:[<>], c:[<>]> | 1len val.a + 1len val.b <= 1len val.c}
+refine = { <a:[<>], b:[<>], c:[<>]> | len val.a + len val.b <= len val.c}
 simple = <a:<0:[<α:<>, β:<>>]>, b:<0:[<α:<>, β:<>>]>, c:[<>]>
 i(val) = <
     a = map (λx. proj_{α} x) proj_{0} proj_{a} val,
@@ -90,7 +90,7 @@ i(val) = <
 validating...
 = OK
 
-refine = { <a:[<>], b:[<>], c:[<>]> | 1len val.a <= 1len val.b + 1len val.c}
+refine = { <a:[<>], b:[<>], c:[<>]> | len val.a <= len val.b + len val.c}
 simple = <a:<0:[<α:<>, β:<>>], 1:[<α:<>, β:<>>]>, b:[<>], c:[<>]>
 i(val) = <
     a = map (λx. proj_{α} x) proj_{0} proj_{a} val ++ map (λx. proj_{α} x) proj_{1} proj_{a} val,
@@ -120,7 +120,7 @@ i(val) = <
 validating...
 = OK
 
-refine = { { <a:[<>], b:[<>]> | 1len val.a <= 1len val.b} | 1len val.b <= 1len val.a}
+refine = { { <a:[<>], b:[<>]> | len val.a <= len val.b} | len val.b <= len val.a}
 simple = <a:<0:[<α:<>, β:<>>]>, b:<>>
 i(val) = <
     a = map (λx. proj_{α} x) proj_{0} proj_{a} val,
@@ -129,7 +129,7 @@ i(val) = <
 validating...
 = OK
 
-refine = { <a:[<>], b:[<>], c:[<>]> | 1len val.a <= 1len val.b V 1len val.a <= 1len val.c }
+refine = { <a:[<>], b:[<>], c:[<>]> | len val.a <= len val.b V len val.a <= len val.c }
 simple = <a:<0:[<α:<>, β:<>>]>, b:[<>], c:[<>]> + <a:<0:[<α:<>, β:<>>]>, b:[<>], c:[<>]>
 i(val) = Case val of 
   Left x1 -> <
