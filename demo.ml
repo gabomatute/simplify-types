@@ -60,5 +60,12 @@ let examples =
   ; "{ <a:[<>], b:[<>], c:[<>]> | 1len val.a <= 1len val.b V 1len val.a <= 1len val.c }"
   ]
 
+let repl () =
+  let read () =
+    read_line (print_string "input  = ") in
+  try while true do showcase (read ()) done with
+    | End_of_file -> ()
+
 let () =
+  if Array.exists ((=) "-i") Sys.argv then repl () else
   List.iter showcase examples

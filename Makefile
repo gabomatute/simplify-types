@@ -34,7 +34,7 @@ clean:
 	rm -rf *.cmi *.cmo *.cmx *.o $(programs)
 
 $(outputs):
-	./$< > $@
+	./$< <<< "" > $@
 
 $(programs):
 	$(ocamlc) $(flags) $(libraries:=.$(lib)) $^ -o $@ 
