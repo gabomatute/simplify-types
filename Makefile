@@ -20,7 +20,7 @@ enumerate_deps = lang
 simplify_deps = lang utils
 parse_deps = lang utils bark
 demo_deps = lang simplify enumerate parse unparse
-tests_deps = utils parse unparse
+parse_tests_deps = utils parse unparse
 
 # Main modules
 programs = demo tests
