@@ -35,13 +35,13 @@ let rec spath = function
   | Val -> "val"
 
 let snumber ((c, n): number) =
-  if n = [] then
-    string_of_int c
-  else
-    let sint i s = if i <> 0 then string_of_int i ^ s else "" in
-    sint c " + " ^ String.concat " + " (List.map begin function
-      | p, c -> sint c ("len " ^ spath p)
-    end n)
+  let spc = function
+    | p, 0 -> "" | p, 1 -> "len " ^ spath p
+    | p, c -> string_of_int c ^ "len " ^ spath p in
+  match c, n with
+  | c, [] -> string_of_int c
+  | 0, n -> String.concat " + " (List.map spc n)
+  | c, n -> String.concat " + " (string_of_int c :: List.map spc n)
 
 let rec sformula = function
   | False -> "F" | True -> "T"
@@ -52,8 +52,8 @@ let rec sformula = function
 and spattern = function
   | MLeft phi -> "Left " ^ sformula phi
   | MRight phi -> "Right " ^ sformula phi
-  | MTuple phis -> "<" ^ snamed ~v:"~" sformula phis ^ ">"
-  | MNil -> "[]" | MCons(phi, phis) -> sformula phi ^ "::" ^ sformula phis
+  | MTuple phis -> "<" ^ snamed ~v:" ~ " sformula phis ^ ">"
+  | MNil -> "[]" | MCons(phi, phis) -> sformula phi ^ " :: " ^ sformula phis
 
 let rec srefine = function
   | RSum(l, r) -> srefine l ^ " + " ^ srefine r
