@@ -15,8 +15,8 @@ let rec sexp ?(d = 1) st =
     let indent = String.make (i * 2) ' ' in "\n" ^ indent in
   function
   | V n -> (n : string)
-  | L(e, t) -> "Left_{" ^ st t ^ "} " ^ sexp ~d st e
-  | R(t, e) -> "Right_{" ^ st t ^ "} " ^ sexp ~d st e
+  | L(e, t) -> "Left " ^ sexp ~d st e
+  | R(t, e) -> "Right " ^ sexp ~d st e
   | Case(e, l, r) -> let c, d = d, d + 1 in
     let sb t (n, e) = br c ^ t ^ " " ^ n ^ " -> " ^ sexp ~d st e in
     "Case " ^ sexp ~d st e ^ " of " ^ sb "Left" l ^ ";" ^ sb "Right" r
