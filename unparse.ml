@@ -25,6 +25,7 @@ let rec sexp ?(d = 1) st =
     "<" ^ br d ^ snamed ~j:("," ^ br d) ~v:" = " (sexp ~d st) es ^ br c ^ ">"
   | Proj(n, e) -> "proj_{" ^ n ^ "} " ^ sexp ~d st e
   | Ls(t, es) -> "[" ^ (String.concat "; " (List.map (sexp ~d st) es)) ^ "]"
+  | Nil t -> "[]" | Cons(e, es) -> sexp ~d st e ^ "::" ^ sexp ~d st es
   | Map((n, f), e) -> "map (λ" ^ n ^ ". " ^ sexp ~d st f ^ ") " ^ sexp ~d st e
   | Append(l, r) -> sexp ~d st l ^ " ++ " ^ sexp ~d st r
   | Flatten(i, e) -> "flatten_" ^ string_of_int i ^ " " ^ sexp ~d st e

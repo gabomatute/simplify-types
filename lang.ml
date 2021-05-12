@@ -11,6 +11,7 @@ type 't exp = V of name
   | Case of 't exp * (name * 't exp) * (name * 't exp)
   | Tuple of (name * 't exp) list | Proj of (name * 't exp)
   | Ls of ('t * 't exp list)
+  | Nil of 't | Cons of 't exp * 't exp
   | Append of 't exp * 't exp | Flatten of int * 't exp
   | Map of (name * 't exp) * 't exp
 
@@ -92,6 +93,11 @@ let rec ssyn ?(vars = []) e =
     List.assoc n ts
   | Ls(t, es) ->
     if List.for_all (ssyn ~vars >> ((=) t)) es then Lst t else raise IllTyped
+  | Nil t -> Lst t
+  | Cons(e, es) ->
+    let t = ssyn ~vars e in
+    let t' = let Lst t = ssyn ~vars es in t in
+    if t = t' then t else raise IllTyped
   | Map((n, f), e) ->
     let t = let Lst t = ssyn ~vars e in t in
     Lst(ssyn ~vars:((n, t) :: vars) f)
@@ -124,6 +130,11 @@ let rec eval ?(vars = []) e =
     List.assoc n ts
   | Ls(t, es) ->
     Ls(t, List.map (eval ~vars) es)
+  | Nil t -> Ls(t, [])
+  | Cons(e, es) ->
+    let e = eval ~vars e in
+    let t, l = let Ls l = eval ~vars es in l in
+    Ls(t, e :: l)
   | Map((n, f), e) ->
     let t, es = let Ls(t, es) = eval ~vars e in t, es in
     let ts = List.map (fun (n, e) -> (n, ssyn e)) vars in
