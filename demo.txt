@@ -1,0 +1,147 @@
+List unroll factor: 10
+
+refine = <>
+simple = <>
+i(val) = val
+validating...
+= OK
+
+refine = <> + <>
+simple = <> + <>
+i(val) = val
+validating...
+= OK
+
+refine = [<>]
+simple = [<>]
+i(val) = val
+validating...
+= OK
+
+refine = <a:<>>
+simple = <a:<>>
+i(val) = val
+validating...
+= OK
+
+refine = <a:<> + <>>
+simple = <a:<> + <>>
+i(val) = val
+validating...
+= OK
+
+refine = <a:[<>]>
+simple = <a:[<>]>
+i(val) = val
+validating...
+= OK
+
+refine = { <> | T }
+simple = <>
+i(val) = val
+validating...
+= OK
+
+refine = <a:[<>], b:[<>]>
+simple = <a:[<>], b:[<>]>
+i(val) = val
+validating...
+= OK
+
+refine = { <a:[<>]> | 0len val.a <= 1len val.a }
+simple = <a:[<>]>
+i(val) = val
+validating...
+= OK
+
+refine = { <a:[<>]> | 1len val.a <= 0len val.a}
+simple = <a:<>>
+i(val) = <
+    a = []
+  >
+validating...
+= OK
+
+refine = { <a:[<>], b:[<>]> | 1len val.a <= 1len val.b}
+simple = <a:<0:[<α:<>, β:<>>]>, b:[<>]>
+i(val) = <
+    a = map (λx. proj_{α} x) proj_{0} proj_{a} val,
+    b = map (λx. proj_{β} x) proj_{0} proj_{a} val ++ proj_{b} val
+  >
+validating...
+= OK
+
+refine = { <a:[<>], b:[<>]> | 2len val.a <= 3len val.b}
+simple = <a:<0:[<α:<1:<>, 2:<>, 3:<>>, β:<1:<>, 2:<>>>]>, b:[<>]>
+i(val) = <
+    a = flatten_3 map (λx. proj_{α} x) proj_{0} proj_{a} val,
+    b = flatten_2 map (λx. proj_{β} x) proj_{0} proj_{a} val ++ proj_{b} val
+  >
+validating...
+= OK
+
+refine = { <a:[<>], b:[<>], c:[<>]> | 1len val.a + 1len val.b <= 1len val.c}
+simple = <a:<0:[<α:<>, β:<>>]>, b:<0:[<α:<>, β:<>>]>, c:[<>]>
+i(val) = <
+    a = map (λx. proj_{α} x) proj_{0} proj_{a} val,
+    b = map (λx. proj_{α} x) proj_{0} proj_{b} val,
+    c = map (λx. proj_{β} x) proj_{0} proj_{a} val ++ map (λx. proj_{β} x) proj_{0} proj_{b} val ++ proj_{c} val
+  >
+validating...
+= OK
+
+refine = { <a:[<>], b:[<>], c:[<>]> | 1len val.a <= 1len val.b + 1len val.c}
+simple = <a:<0:[<α:<>, β:<>>], 1:[<α:<>, β:<>>]>, b:[<>], c:[<>]>
+i(val) = <
+    a = map (λx. proj_{α} x) proj_{0} proj_{a} val ++ map (λx. proj_{α} x) proj_{1} proj_{a} val,
+    b = map (λx. proj_{β} x) proj_{0} proj_{a} val ++ proj_{b} val,
+    c = map (λx. proj_{β} x) proj_{1} proj_{a} val ++ proj_{c} val
+  >
+validating...
+= OK
+
+refine = { <a:[<>], b:[<>], c:[<>]> | 2len val.a + 3len val.b <= 5len val.c}
+simple = <a:<0:[<α:<1:<>, 2:<>, 3:<>, 4:<>, 5:<>>, β:<1:<>, 2:<>>>]>, b:<0:[<α:<1:<>, 2:<>, 3:<>, 4:<>, 5:<>>, β:<1:<>, 2:<>, 3:<>>>]>, c:[<>]>
+i(val) = <
+    a = flatten_5 map (λx. proj_{α} x) proj_{0} proj_{a} val,
+    b = flatten_5 map (λx. proj_{α} x) proj_{0} proj_{b} val,
+    c = flatten_2 map (λx. proj_{β} x) proj_{0} proj_{a} val ++ flatten_3 map (λx. proj_{β} x) proj_{0} proj_{b} val ++ proj_{c} val
+  >
+validating...
+= OK
+
+refine = { <a:[<>], b:[<>], c:[<>]> | 5len val.a <= 2len val.b + 3len val.c}
+simple = <a:<0:[<α:<1:<>, 2:<>>, β:<1:<>, 2:<>, 3:<>, 4:<>, 5:<>>>], 1:[<α:<1:<>, 2:<>, 3:<>>, β:<1:<>, 2:<>, 3:<>, 4:<>, 5:<>>>]>, b:[<>], c:[<>]>
+i(val) = <
+    a = flatten_2 map (λx. proj_{α} x) proj_{0} proj_{a} val ++ flatten_3 map (λx. proj_{α} x) proj_{1} proj_{a} val,
+    b = flatten_5 map (λx. proj_{β} x) proj_{0} proj_{a} val ++ proj_{b} val,
+    c = flatten_5 map (λx. proj_{β} x) proj_{1} proj_{a} val ++ proj_{c} val
+  >
+validating...
+= OK
+
+refine = { { <a:[<>], b:[<>]> | 1len val.a <= 1len val.b} | 1len val.b <= 1len val.a}
+simple = <a:<0:[<α:<>, β:<>>]>, b:<>>
+i(val) = <
+    a = map (λx. proj_{α} x) proj_{0} proj_{a} val,
+    b = map (λx. proj_{β} x) proj_{0} proj_{a} val
+  >
+validating...
+= OK
+
+refine = { <a:[<>], b:[<>], c:[<>]> | 1len val.a <= 1len val.b V 1len val.a <= 1len val.c }
+simple = <a:<0:[<α:<>, β:<>>]>, b:[<>], c:[<>]> + <a:<0:[<α:<>, β:<>>]>, b:[<>], c:[<>]>
+i(val) = Case val of 
+  Left x1 -> <
+      a = map (λx. proj_{α} x) proj_{0} proj_{a} x1,
+      b = map (λx. proj_{β} x) proj_{0} proj_{a} x1 ++ proj_{b} x1,
+      c = proj_{c} x1
+    >;
+  Right x2 -> <
+      a = map (λx. proj_{α} x) proj_{0} proj_{a} x2,
+      b = proj_{b} x2,
+      c = map (λx. proj_{β} x) proj_{0} proj_{a} x2 ++ proj_{c} x2
+    >
+validating...
+= OK
+

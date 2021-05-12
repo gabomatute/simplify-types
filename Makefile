@@ -25,7 +25,7 @@ parse_tests_deps = utils parse unparse
 
 # Main modules
 programs = demo examples parse_tests
-outputs = examples.md
+outputs = demo.txt examples.md
 
 # Build rules
 .PHONY: all clean
