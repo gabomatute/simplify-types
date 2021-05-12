@@ -40,7 +40,7 @@ let () =
   print_endline "## Improve Performance";
   print_endline "Potentially could use known properties to automatically prune unused states from your types.";
   showcase
-    "e.g. Automatically drop type union tags and empty list pointers when uneeded."
+    "e.g. Automatically drop type union tags and empty list pointers when unnecessary."
     "{ [<>] + [<>] | match (Left len val <= 0) }";
   print_endline "";
   print_endline "## Improve Interfaces";

@@ -22,7 +22,7 @@ output = <front:<0:[<α:<>, β:<>>]>, back:[<>]>
 ## Improve Performance
 Potentially could use known properties to automatically prune unused states from your types.
 ```
-# e.g. Automatically drop type union tags and empty list pointers when uneeded.
+# e.g. Automatically drop type union tags and empty list pointers when unnecessary.
 input  = { [<>] + [<>] | match(Left 1len val <= 0) }
 output = <>
 ```
