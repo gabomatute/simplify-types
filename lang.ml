@@ -159,12 +159,13 @@ let rec fcheck e = function
   | LEq(l, r) -> ncompute e l <= ncompute e r
   | Match p -> pmatch e p
 
-and pmatch e p = match e, p with
-  | L(e, t), MLeft phi -> fcheck e phi
-  | R(t, e), MRight phi -> fcheck e phi
-  | Tuple es, MTuple phis ->
+and pmatch e p = try match p with
+  | MLeft phi -> let L(e, t) = e in fcheck e phi
+  | MRight phi -> let R(t, e) = e in fcheck e phi
+  | MTuple phis -> let es = let Tuple es = e in es in
     List.for_all (fun (n, phi) -> fcheck (List.assoc n es) phi) phis
-  | _ -> false
+  with
+  | Match_failure _ -> false
 
 let rec rcheck e = function
   | RVoid -> false
