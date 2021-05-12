@@ -15,10 +15,10 @@ libraries = str
 
 # Source dependencies
 lang_deps = utils
-unparse_deps = lang
 enumerate_deps = lang
-simplify_deps = lang utils
-parse_deps = lang utils bark
+simplify_deps = utils lang
+parse_deps = utils lang bark
+unparse_deps = lang
 demo_deps = lang simplify enumerate parse unparse
 parse_tests_deps = utils parse unparse
 

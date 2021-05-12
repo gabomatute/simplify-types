@@ -1,5 +1,5 @@
-open Lang
 open Utils
+open Lang
 
 let rec proj p v = match p with
   | Dot(p, x) -> Proj(x, proj p v)

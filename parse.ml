@@ -1,5 +1,5 @@
-open Lang
 open Utils
+open Lang
 
 open Bark
 open Bark.Syntax
