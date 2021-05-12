@@ -103,6 +103,12 @@ let true_keyword =
 let match_keyword =
   make_token "match"
 
+let lparen_symbol =
+  make_token "("
+
+let rparen_symbol =
+  make_token ")"
+
 let leq_symbol =
   make_token "<="
 
@@ -260,8 +266,10 @@ and atom' : unit -> formula parser = fun () ->
           ; in_context "match formula"
              ( succeed (fun p -> Match p)
                  |. keyword match_keyword
-                 |. spaces1
+                 |. spaces
+                 |. symbol lparen_symbol
                  |= lazily pattern'
+                 |. symbol rparen_symbol
              )
          ]
     |. spaces

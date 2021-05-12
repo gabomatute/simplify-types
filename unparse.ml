@@ -42,7 +42,7 @@ let rec sformula = function
   | False -> "F" | True -> "T"
   | Or(l, r) -> sformula l ^ " V " ^ sformula r
   | LEq(l, r) -> snumber l ^ " <= " ^ snumber r
-  | Match p -> "match " ^ spattern p
+  | Match p -> "match(" ^ spattern p ^ ")"
 
 and spattern = function
   | MLeft phi -> "Left " ^ sformula phi
