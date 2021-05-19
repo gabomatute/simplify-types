@@ -23,8 +23,8 @@ let showcase input =
     | Ok rt ->
         let i, t = simplify rt in
         print_endline ("simple = " ^ ssimple t);
-        let ival = optimize ~v:("val", t) (i (V "val")) in
-        print_endline ("i(val) = " ^ sexp ssimple ival);
+        let iopt (V n) = optimize ~v:(n, t) (i (V n)) in
+        print_endline ("i(val) = " ^ sexp ssimple (iopt (V "val")));
         print_endline ("validating...");
         begin try
           validate rt i t;
