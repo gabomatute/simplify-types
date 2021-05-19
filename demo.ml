@@ -62,7 +62,7 @@ let examples =
 
 let repl () =
   let read () =
-    read_line (print_string "input  = ") in
+    read_line (print_string "parse  > ") in
   try while true do showcase (read ()) done with
     | End_of_file -> ()
 
