@@ -8,6 +8,13 @@ let rec assoc_update f k ?v = function
   | hd :: rest -> hd :: assoc_update f k ?v rest
   | [] -> [(k, f (Option.get v))]
 
+let to_list l =
+  List.rev (Seq.fold_left (fun l e -> e :: l) [] l)
+
+let rec range ?(s = 0) n () =
+  if s < n then Seq.Cons(s, range ~s:(s + 1) n)
+  else Seq.Nil
+
 let uppercase_char : char -> bool =
   function
     | 'A' .. 'Z' -> true

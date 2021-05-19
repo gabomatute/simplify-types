@@ -4,18 +4,18 @@ open Enumerate
 open Parse
 open Unparse
 
-let n = 10
+let lmax = 10
 let () =
-  print_endline ("List unroll factor: " ^ string_of_int n);
+  print_endline ("List unroll factor: " ^ string_of_int lmax);
   print_newline ()
 
 exception Counter of simple exp * simple exp
 let validate rt i t =
-  einit ~n t begin fun e ->
+  Seq.iter begin fun e ->
     let out = eval (i e) in
     if rcheck out rt then () else
     raise (Counter(e, out))
-  end
+  end (einit ~lmax t )
 
 let showcase input =
   print_endline ("refine = " ^ input ^ "");

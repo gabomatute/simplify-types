@@ -1,29 +1,28 @@
+open Utils
 open Lang
 
-let expand ~n g f =
-  let rec product ~n f =
-    if n = 0 then f [] else
-    product ~n:(n - 1) (fun es -> g (fun e -> f (e :: es))) in
-  for n = 0 to n do product ~n f done
+let rec product ll () = match ll () with
+  | Seq.Cons(l, ll) -> Seq.flat_map (fun e -> Seq.map (Seq.cons e) (product ll)) l ()
+  | Seq.Nil -> Seq.return Seq.empty ()
 
-let rec tinit ~n ~d f =
-  if d = 0 then f (Prod []) else
-  let g = tinit ~n ~d:(d - 1) in
-  g (fun t -> f (Lst t));
-  g (fun l -> g (fun r -> f (Sum(l, r))));
-  let name = List.mapi (fun i e -> (string_of_int i, e)) in
-  expand ~n g (fun ts -> f (Prod(name ts)))
+let repeat ~n a =
+  Seq.unfold (function 0 -> None | n -> Some(a, n - 1)) n
 
-let rec einit ~n t f = match t with
-    | Sum(l, r) ->
-      einit ~n l (fun e -> f (L(e, r)));
-      einit ~n r (fun e -> f (R(l, e)))
-    | Prod [] -> f (Tuple [])
+let expand ?s ~n f =
+  Seq.flat_map f (range ?s (n + 1))
+
+let rec einit ~lmax t = match t with
+    | Sum(l, r) -> Seq.append
+      (Seq.map (fun e -> L(e, r)) (einit ~lmax l))
+      (Seq.map (fun e -> R(l, e)) (einit ~lmax r))
+    | Prod [] -> Seq.return (Tuple [])
     | Prod((x, t) :: ts) ->
-      einit ~n (Prod ts) begin fun e ->
+      Seq.flat_map begin fun e ->
         let es = let Tuple es = e in es in
-        einit ~n t (fun e -> f (Tuple((x, e) :: es)))
-      end
+        Seq.map (fun e -> Tuple((x, e) :: es)) (einit ~lmax t)
+      end (einit ~lmax (Prod ts))
     | Lst t ->
-      expand ~n (einit ~n t) (fun es -> f (Ls(t, es)))
+      let es = einit ~lmax t in
+      Seq.map (fun l -> Ls(t, to_list l))
+        (expand ~n:lmax (fun n -> product (repeat ~n es)))
     | Void -> assert false
