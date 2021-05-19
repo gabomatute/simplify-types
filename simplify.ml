@@ -9,14 +9,6 @@ let rec tselect t = function
   | Dot(p, x) -> let Prod ts = tselect t p in List.assoc x ts
   | Val -> t
 
-let rec stack ?(s = []) = function
-  | Dot(p, x) -> stack ~s:(x :: s) p
-  | Val -> s
-
-let rec path ?(p = Val) = function
-  | x :: rest -> path ~p:(Dot(p, x)) rest
-  | [] -> p
-
 let rec slen ?(s = []) = function
   | L _ | R _ | Case _ -> assert false
   | Proj(n, e) -> slen ~s:(n :: s) e

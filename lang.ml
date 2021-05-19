@@ -57,6 +57,17 @@ let mult c ((d, n): number) : number =
   (c * d, List.map (fun (p, ci) -> (p, c * ci)) n)
 
 
+(* path stack translation *)
+
+let rec stack ?(s = []) = function
+  | Dot(p, x) -> stack ~s:(x :: s) p
+  | Val -> s
+
+let rec path ?(p = Val) = function
+  | x :: rest -> path ~p:(Dot(p, x)) rest
+  | [] -> p
+
+
 (* type operators *)
 
 let power t n =
