@@ -83,8 +83,8 @@ let rec simplify = function
     let i1, t1 = simplify rt1 in
     let i2, t2 = simplify rt2 in
     let i v = Case(v,
-      ("x1", L(i1(V "x1"), bare rt1)),
-      ("x2", R(bare rt2, i2(V "x2")))) in
+      ("x1", L(i1(V "x1"), bare rt2)),
+      ("x2", R(bare rt1, i2(V "x2")))) in
     (i, Sum(t1, t2))
   | RProd rnts ->
     let ns, rts = List.split rnts in
