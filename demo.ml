@@ -66,6 +66,8 @@ let repl () =
   try while true do showcase (read ()) done with
     | End_of_file -> ()
 
-let () =
-  if Array.exists ((=) "-i") Sys.argv then repl () else
-  List.iter showcase examples
+let () = match Sys.argv with
+  | [| prog; "-i" |] -> repl ()
+  | [| prog |] -> List.iter showcase examples
+  | _ -> let prog = Sys.argv.(0) in
+    print_endline ("help: " ^ prog ^ "[ -i ]")
