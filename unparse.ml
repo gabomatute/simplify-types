@@ -35,8 +35,9 @@ let rec spath = function
   | Val -> "val"
 
 let snumber ((c, n): number) =
+  let n = List.filter (fun (p, c) -> c <> 0) n in
   let spc = function
-    | p, 0 -> "" | p, 1 -> "len " ^ spath p
+    | p, 1 -> "len " ^ spath p
     | p, c -> string_of_int c ^ "len " ^ spath p in
   match c, n with
   | c, [] -> string_of_int c
