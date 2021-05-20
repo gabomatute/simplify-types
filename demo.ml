@@ -86,7 +86,10 @@ let showcase input =
   | Error msg ->
     print_endline ("!!! Parse failure: " ^ msg)
 
+let c = ref 0
 let crunch rt =
+  if (incr c; !c) mod 1000000 = 0 then
+    print_string "."; flush stdout;
   let ival, t = simplify rt in
   try validate rt ival t with
   | Counter(i, o) ->
