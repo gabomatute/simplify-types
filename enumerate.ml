@@ -6,7 +6,7 @@ open Lang
 
 let choose l r =
   let rec checked l r =
-    if compare_length_with l r < 0 then
+    if Seq.compare_length_with l r < 0 then
       Seq.empty else
     unchecked l r
   and unchecked l r () =
@@ -30,13 +30,13 @@ let repeat ~n a =
   Seq.unfold (function 0 -> None | n -> Some(a, n - 1)) n
 
 let expand ?s ~n f =
-  Seq.flat_map f (range ?s (n + 1))
+  Seq.flat_map f (Seq.range ?s (n + 1))
 
 
 (* Grammar enumeration *)
 
 let cinit ~cmax =
-  range ~s:1 cmax
+  Seq.range ~s:1 cmax
   
 let ninit ~tmax ~cmax t : number Seq.t =
   let rec linit ?(s = []) t = match t with
@@ -47,7 +47,7 @@ let ninit ~tmax ~cmax t : number Seq.t =
     | Refine(t, phi) -> linit ~s t
     | RVoid -> assert false in
   let terms = cross (linit t) (cinit ~cmax) in
-  Seq.map (fun l -> (0, to_list l))
+  Seq.map (fun l -> (0, Seq.to_list l))
     (expand ~n:tmax (fun k -> choose terms k))
 
 let finit ~fmax ~tmax ~cmax t =
@@ -67,12 +67,12 @@ let rinit ~dmax ~pmax ~fmax ~tmax ~cmax =
     if depth = 0 then Seq.empty, Seq.return (RProd []) else
     let name = List.mapi (fun i t -> (string_of_int i, t)) in
     let prev, last = rinit (depth - 1) in
-    (Seq.append prev last, concat [
+    (Seq.append prev last, Seq.concat [
       Seq.map (fun (l, r) -> RSum(l, r))
-        (concat [cross prev last; cross last prev; cross last last])
-    ; Seq.map (fun ts -> RProd(name (to_list ts)))
+        (Seq.concat [cross prev last; cross last prev; cross last last])
+    ; Seq.map (fun ts -> RProd(name (Seq.to_list ts)))
         (expand ~s:1 ~n:pmax (fun n -> Seq.flat_map product
-          (skip 1 (product (repeat ~n (List.to_seq [prev; last]))))))
+          (Seq.skip 1 (product (repeat ~n (List.to_seq [prev; last]))))))
     ; Seq.map (fun t -> RLst t) last
     ; Seq.flat_map begin fun t ->
         Seq.map (fun phi -> Refine(t, phi))
@@ -94,6 +94,6 @@ let rec einit ~lmax t = match t with
       end (einit ~lmax (Prod ts))
     | Lst t ->
       let es = einit ~lmax t in
-      Seq.map (fun l -> Ls(t, to_list l))
+      Seq.map (fun l -> Ls(t, Seq.to_list l))
         (expand ~n:lmax (fun n -> product (repeat ~n es)))
     | Void -> assert false

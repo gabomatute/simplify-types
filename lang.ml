@@ -51,7 +51,8 @@ let len p : number =
   (0, [(p, 1)])
 
 let add ((c, n): number) ((d, m): number) : number =
-  (c + d, List.fold_left (fun n (p, c) -> assoc_update ((+) c) p ~v:0 n) n m)
+  (c + d, List.fold_left (fun n (p, c) ->
+    List.assoc_update ((+) c) p ~v:0 n) n m)
 
 let mult c ((d, n): number) : number =
   (c * d, List.map (fun (p, ci) -> (p, c * ci)) n)

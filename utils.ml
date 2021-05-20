@@ -3,31 +3,38 @@ let (>>) f g x =
 
 let (let* ) = Option.bind
 
-let rec assoc_update f k ?v = function
-  | (ki, vi) :: rest when ki = k -> (ki, f vi) :: rest
-  | hd :: rest -> hd :: assoc_update f k ?v rest
-  | [] -> [(k, f (Option.get v))]
+module List = struct
+  include List
+  let rec assoc_update f k ?v = function
+    | (ki, vi) :: rest when ki = k -> (ki, f vi) :: rest
+    | hd :: rest -> hd :: assoc_update f k ?v rest
+    | [] -> [(k, f (Option.get v))]
+end
 
-let rec compare_length_with l n = match l (), n with
-  | Seq.Cons _, 0 -> 1 | Seq.Nil, 0 -> 0 | Seq.Nil, n -> -n
-  | Seq.Cons(h, l), n -> compare_length_with l (n - 1)
+module Seq = struct
+  include Seq
 
-let rec concat = function
-  | hd :: tl -> Seq.append hd (fun () -> concat tl ())
-  | [] -> Seq.empty
+  let rec compare_length_with l n = match l (), n with
+    | Seq.Cons _, 0 -> 1 | Seq.Nil, 0 -> 0 | Seq.Nil, n -> -n
+    | Seq.Cons(h, l), n -> compare_length_with l (n - 1)
 
-let rec skip n l =
-  if n = 0 then l else
-  match l () with
-    | Seq.Cons(_, l) -> skip (n - 1) l
-    | Seq.Nil -> assert false
+  let rec concat = function
+    | hd :: tl -> Seq.append hd (fun () -> concat tl ())
+    | [] -> Seq.empty
 
-let to_list l =
-  List.rev (Seq.fold_left (fun l e -> e :: l) [] l)
+  let rec skip n l =
+    if n = 0 then l else
+    match l () with
+      | Seq.Cons(_, l) -> skip (n - 1) l
+      | Seq.Nil -> assert false
 
-let rec range ?(s = 0) n () =
-  if s < n then Seq.Cons(s, range ~s:(s + 1) n)
-  else Seq.Nil
+  let to_list l =
+    List.rev (Seq.fold_left (fun l e -> e :: l) [] l)
+
+  let rec range ?(s = 0) n () =
+    if s < n then Seq.Cons(s, range ~s:(s + 1) n)
+    else Seq.Nil
+end
 
 let uppercase_char : char -> bool =
   function
