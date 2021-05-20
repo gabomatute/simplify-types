@@ -8,6 +8,20 @@ let rec assoc_update f k ?v = function
   | hd :: rest -> hd :: assoc_update f k ?v rest
   | [] -> [(k, f (Option.get v))]
 
+let rec compare_length_with l n = match l (), n with
+  | Seq.Cons _, 0 -> 1 | Seq.Nil, 0 -> 0 | Seq.Nil, n -> -n
+  | Seq.Cons(h, l), n -> compare_length_with l (n - 1)
+
+let rec concat = function
+  | hd :: tl -> Seq.append hd (fun () -> concat tl ())
+  | [] -> Seq.empty
+
+let rec skip n l =
+  if n = 0 then l else
+  match l () with
+    | Seq.Cons(_, l) -> skip (n - 1) l
+    | Seq.Nil -> assert false
+
 let to_list l =
   List.rev (Seq.fold_left (fun l e -> e :: l) [] l)
 

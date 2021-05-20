@@ -4,40 +4,24 @@ open Enumerate
 open Parse
 open Unparse
 
-let lmax = 10
-let () =
-  print_endline ("List unroll factor: " ^ string_of_int lmax);
-  print_newline ()
 
-exception Counter of simple exp * simple exp
-let validate rt i t =
-  Seq.iter begin fun e ->
-    let out = eval (i e) in
-    if rcheck out rt then () else
-    raise (Counter(e, out))
-  end (einit ~lmax t )
+(* Enumeration settings *)
 
-let showcase input =
-  print_endline ("refine = " ^ input ^ "");
-  match parse refine input with
-    | Ok rt ->
-        let i, t = simplify rt in
-        print_endline ("simple = " ^ ssimple t);
-        let iopt (V n) = optimize ~v:(n, t) (i (V n)) in
-        print_endline ("i(val) = " ^ sexp ssimple (iopt (V "val")));
-        print_endline ("validating...");
-        begin try
-          validate rt i t;
-          print_endline "= OK"
-        with
-          | Counter(e, out) ->
-            print_endline "!!! FAILURE";
-            print_endline ("input = " ^ sexp ssimple e);
-            print_endline ("out = " ^ sexp ssimple out);
-        end;
-        print_newline ()
-    | Error msg ->
-        print_endline ("!!! Parse failure: " ^ msg)
+let setting name v =
+  print_endline (name ^ ": " ^ string_of_int v); v
+
+let rinit = rinit
+  ~dmax:(setting "Max type depth" 4)
+  ~pmax:(setting "Max record size" 2)
+  ~fmax:(setting "Max # constraints" 3)
+  ~tmax:(setting "Max lens per term" 2)
+  ~cmax:(setting "Max contraint constant" 5)
+
+let einit = einit
+  ~lmax:(setting "List unroll factor" 3)
+
+
+(* Examples *)
 
 let examples =
   [ "<>"
@@ -60,6 +44,55 @@ let examples =
   ; "{ <a:[<>], b:[<>], c:[<>]> | len val.a <= len val.b V len val.a <= len val.c }"
   ]
 
+(* Helpers *)
+
+let v : name = "val"
+
+let simplify rt =
+  let i, t = simplify rt in
+  let iopt (V n) = optimize ~v:(n, t) (i (V n)) in
+  (iopt (V v), t)
+
+exception Counter of simple exp * simple exp
+let validate rt ival t =
+  Seq.iter begin fun e ->
+    let out = eval ~vars:[v, e] ival in
+    if rcheck out rt then () else
+    raise (Counter(e, out))
+  end (einit t)
+
+let showcounter input output =
+  print_endline ("input  = " ^ sexp ssimple input);
+  print_endline ("output = " ^ sexp ssimple output)
+
+let showcase input =
+  match parse refine input with
+  | Ok rt ->
+    print_newline ();
+    print_endline ("refine = " ^ srefine rt ^ "");
+    let ival, t = simplify rt in
+    print_endline ("simple = " ^ ssimple t);
+    print_endline ("i(val) = " ^ sexp ssimple ival);
+    print_string "validating..."; flush stdout;
+    begin try
+      validate rt ival t;
+      print_endline " OK"
+    with
+      | Counter(input, output) ->
+        print_endline " counterexample";
+        showcounter input output;
+        print_endline "!!! FAILURE";
+    end
+  | Error msg ->
+    print_endline ("!!! Parse failure: " ^ msg)
+
+let crunch rt =
+  let ival, t = simplify rt in
+  try validate rt ival t with
+  | Counter(i, o) ->
+    showcounter i o;
+    assert false
+
 let repl () =
   let read () =
     read_line (print_string "parse  > ") in
@@ -68,6 +101,7 @@ let repl () =
 
 let () = match Sys.argv with
   | [| prog; "-i" |] -> repl ()
+  | [| prog; "-e" |] -> Seq.iter crunch rinit
   | [| prog |] -> List.iter showcase examples
   | _ -> let prog = Sys.argv.(0) in
-    print_endline ("help: " ^ prog ^ "[ -i ]")
+    print_endline ("help: " ^ prog ^ "[ -i | -e ]")
