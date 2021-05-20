@@ -13,7 +13,7 @@ let rec slen ?(s = []) = function
   | L _ | R _ | Case _ -> assert false
   | Proj(n, e) -> slen ~s:(n :: s) e
   | Tuple es -> let n :: s = s in slen ~s (List.assoc n es)
-  | Ls _ -> assert false
+  | Ls(t, l) -> const (List.length l)
   | Nil t -> const 0
   | Cons(e, es) -> add (const 1) (slen ~s es)
   | Append(e1, e2) -> add (slen ~s e1) (slen ~s e2)
