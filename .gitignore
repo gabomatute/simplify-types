@@ -6,3 +6,6 @@
 demo
 examples
 parse_tests
+
+# Profile
+ocamlprof.dump

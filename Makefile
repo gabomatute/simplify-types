@@ -26,7 +26,7 @@ outputs = demo.txt examples.md
 .PHONY: all clean
 all: $(programs) $(outputs)
 clean:
-	rm -rf *.cmi *.cmo *.cmx *.o $(programs)
+	rm -rf *.cmi *.cmo *.cmx *.o $(programs) ocamlprof.dump
 
 $(outputs):
 	./$< <<< "" > $@
