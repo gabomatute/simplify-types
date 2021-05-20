@@ -154,7 +154,8 @@ let rec simplify = function
       | hd :: tl -> List.fold_left (fun l r -> Append(l, r)) hd tl
       | [] -> Ls(t, []) in
     let epu v =
-      List.map2 begin fun tu (pu, cu) ->
+      List.map begin fun (pu, cu) ->
+        let tu = let Lst t = tselect (bare rt) pu in t in
         concat tu (List.mapi begin fun i (qv, dv) ->
             let luv'cu = lcm cu dv / cu in
             let extract = Proj(string_of_int i, proj pu v) in
@@ -162,10 +163,10 @@ let rec simplify = function
             if luv'cu = 1 then rebuilt else
             Flatten(luv'cu, rebuilt)
           end nv)
-      end tu nu in
+      end nu in
     let eqv v =
       List.mapi begin fun i (qv, dv) ->
-        let tv = List.nth tv i in
+        let tv = let Lst t = tselect (bare rt) qv in t in
         concat tv ((List.map begin fun (pu, cu) ->
             let luv'dv = lcm cu dv / dv in
             let extract = Proj(string_of_int i, proj pu v) in
