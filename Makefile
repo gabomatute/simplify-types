@@ -2,13 +2,8 @@
 ocamlc ?= ocamlopt
 flags ?= -w -8
 
-ifeq ($(ocamlc), ocamlopt)
-	obj = cmx
-	lib = cmxa
-else
-	obj = cmo
-	lib = cma
-endif
+obj = $(if $(findstring ocamlopt,$(ocamlc)),cmx,cmo)
+lib = $(if $(findstring ocamlopt,$(ocamlc)),cmxa,cma)
 
 # Libraries needed
 libraries = str
