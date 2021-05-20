@@ -61,7 +61,9 @@ let finit ~fmax ~tmax ~cmax t =
   end (expand ~n:fmax (fun k -> choose leqs k))
 
 let rinit ~dmax ~pmax ~fmax ~tmax ~cmax =
-  let rec rinit depth = 
+  let rec rinit depth =
+    (* FIX: disabled ORs in nested types *)
+    let fmax = if depth = dmax then fmax else 1 in
     if depth = 0 then Seq.empty, Seq.return (RProd []) else
     let name = List.mapi (fun i t -> (string_of_int i, t)) in
     let prev, last = rinit (depth - 1) in
