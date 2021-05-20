@@ -1,3 +1,4 @@
+open Utils
 open Lang
 open Simplify
 open Enumerate
@@ -46,55 +47,56 @@ let examples =
 
 (* Helpers *)
 
+let show msg ?rt ?t ?iv ?input ?output () =
+  begin match msg with
+    | Ok Some msg -> print_endline msg | Ok None -> ()
+    | Error msg -> print_endline ("!!! " ^ msg) end;
+  Option.iter (srefine >> (^) "refine = " >> print_endline) rt;
+  Option.iter (ssimple >> (^) "simple = " >> print_endline) t;
+  Option.iter (sexp ssimple >> (^) "i(val) = " >> print_endline) iv;
+  Option.iter (sexp ssimple >> (^) "input  = " >> print_endline) input;
+  Option.iter (sexp ssimple >> (^) "output = " >> print_endline) output
+
 let v : name = "val"
 
 let simplify rt =
-  let i, t = simplify rt in
-  let iopt (V n) = optimize ~v:(n, t) (i (V n)) in
-  (iopt (V v), t)
+  let i, t = try simplify rt with err ->
+    show (Error "Simplify exception") ~rt (); raise err in
+  let i (V n) = try optimize ~v:(n, t) (i (V n)) with err ->
+    show (Error "Optimize exception") ~rt ~t ~iv:(i (V "val")) (); raise err in
+  (i (V v), t)
 
 exception Counter of simple exp * simple exp
-let validate rt ival t =
-  Seq.iter begin fun e ->
-    let out = eval ~vars:[v, e] ival in
-    if rcheck out rt then () else
-    raise (Counter(e, out))
-  end (einit t)
-
-let showcounter input output =
-  print_endline ("input  = " ^ sexp ssimple input);
-  print_endline ("output = " ^ sexp ssimple output)
+let validate rt iv t = try
+    Seq.iter begin fun input ->
+      let output = try eval ~vars:[v, input] iv with err ->
+        show (Error "Evaluation error") ~rt ~iv ~input (); raise err in
+      if try not (rcheck output rt) with err ->
+        show (Error "Check exception") ~rt ~output (); raise err then
+      raise (Counter(input, output))
+    end (einit t)
+  with
+    | Counter(input, output) as err ->
+      show (Error "Counter example") ~rt ~t ~iv ~input ~output ();
+      raise err
 
 let showcase input =
   match parse refine input with
   | Ok rt ->
-    print_newline ();
-    print_endline ("refine = " ^ srefine rt ^ "");
-    let ival, t = simplify rt in
-    print_endline ("simple = " ^ ssimple t);
-    print_endline ("i(val) = " ^ sexp ssimple ival);
-    print_string "validating..."; flush stdout;
-    begin try
-      validate rt ival t;
-      print_endline " OK"
-    with
-      | Counter(input, output) ->
-        print_endline " counterexample";
-        showcounter input output;
-        print_endline "!!! FAILURE";
-    end
+    let iv, t = simplify rt in
+    show (Ok None) ~rt ~t ~iv ();
+    validate rt iv t;
+    print_endline "Validated!";
+    print_newline ()
   | Error msg ->
-    print_endline ("!!! Parse failure: " ^ msg)
+    show (Error("Parse failure: " ^ msg)) ()
 
 let c = ref 0
 let crunch rt =
+  let iv, t = simplify rt in
   if (incr c; !c) mod 1000000 = 0 then
-    print_string "."; flush stdout;
-  let ival, t = simplify rt in
-  try validate rt ival t with
-  | Counter(i, o) ->
-    showcounter i o;
-    assert false
+    show (Ok(Some(string_of_int !c))) ~rt ~t ~iv ();
+  validate rt iv t
 
 let repl () =
   let read () =

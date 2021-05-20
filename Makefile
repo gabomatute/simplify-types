@@ -14,7 +14,7 @@ enumerate_deps = utils lang
 simplify_deps = utils lang
 parse_deps = utils lang bark
 unparse_deps = lang
-demo_deps = lang simplify enumerate parse unparse
+demo_deps = utils lang simplify enumerate parse unparse
 examples_deps = utils lang simplify parse unparse
 parse_tests_deps = utils parse unparse
 
