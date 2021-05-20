@@ -1,8 +1,6 @@
 let (>>) f g x =
   g (f x)
 
-let (let* ) = Option.bind
-
 module List = struct
   include List
   let rec assoc_update f k ?v = function

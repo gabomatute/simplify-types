@@ -78,6 +78,7 @@ let rec log (Prod ts) = match ts with
   | [] -> Some(Prod [], 0)
   | (_, t) :: [] -> Some(t, 1)
   | (_, t') :: ts ->
+    let (let*) = Option.bind in
     let* t, i = log (Prod ts) in
     if t' = t then Some(t, i + 1) else None
 
