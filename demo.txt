@@ -1,8 +1,3 @@
-Max contraint constant: 5
-Max lens per term: 2
-Max # constraints: 3
-Max record size: 2
-Max type depth: 4
 List unroll factor: 3
 
 refine = <>

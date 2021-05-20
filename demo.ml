@@ -10,15 +10,15 @@ open Unparse
 let setting name v =
   print_endline (name ^ ": " ^ string_of_int v); v
 
-let rinit = rinit
-  ~dmax:(setting "Max type depth" 4)
-  ~pmax:(setting "Max record size" 2)
-  ~fmax:(setting "Max # constraints" 3)
-  ~tmax:(setting "Max lens per term" 2)
-  ~cmax:(setting "Max contraint constant" 5)
-
 let einit = einit
   ~lmax:(setting "List unroll factor" 3)
+
+let rinit () = rinit
+  ~dmax:(setting "Max type depth" 3)
+  ~pmax:(setting "Max record size" 2)
+  ~fmax:(setting "Max # constraints" 2)
+  ~tmax:(setting "Max lens per term" 2)
+  ~cmax:(setting "Max contraint constant" 2)
 
 
 (* Examples *)
@@ -104,7 +104,7 @@ let repl () =
 
 let () = match Sys.argv with
   | [| prog; "-i" |] -> repl ()
-  | [| prog; "-e" |] -> Seq.iter crunch rinit
+  | [| prog; "-e" |] -> Seq.iter crunch (rinit ())
   | [| prog |] -> List.iter showcase examples
   | _ -> let prog = Sys.argv.(0) in
     print_endline ("help: " ^ prog ^ "[ -i | -e ]")
