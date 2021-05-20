@@ -20,6 +20,7 @@ let riter () = riter
   ~fmax:(setting "Max # constraints" 2)
   ~tmax:(setting "Max lens per term" 2)
   ~cmax:(setting "Max contraint constant" 2)
+  ~lmax:(setting "Max list pattern length" 3)
 
 
 (* Examples *)

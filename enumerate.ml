@@ -50,17 +50,44 @@ let niter ~tmax ~cmax t : number Seq.t =
   Seq.map (fun l -> (0, Seq.to_list l))
     (expand ~n:tmax (fun k -> choose terms k))
 
-let fiter ~fmax ~tmax ~cmax t =
+let rec fiter ~fmax ~tmax ~cmax ?lmax t =
   let ns = niter ~tmax ~cmax t in
-  let leqs = cross ns ns in
+  let leqs = Seq.map (fun (l, r) -> LEq(l, r)) (cross ns ns) in
+  let matchs = match lmax with
+    | Some lmax -> Seq.map (fun p -> Match p) (piter ~fmax ~tmax ~cmax ~lmax t)
+    | None -> Seq.empty in
+  let phis = Seq.append leqs matchs in
   Seq.map begin fun l -> match l () with
-    | Seq.Cons((l, r), leqs) ->
-      let or_ phi (l, r) = Or(phi, LEq(l, r)) in
-      Seq.fold_left or_ (LEq(l, r)) leqs
+    | Seq.Cons(phi, phis) ->
+      let or_ acc phi = Or(phi, acc) in
+      Seq.fold_left or_ phi phis
     | Seq.Nil -> True
-  end (expand ~n:fmax (fun k -> choose leqs k))
+  end (expand ~n:fmax (fun k -> choose phis k))
 
-let riter ~dmax ~pmax ~fmax ~tmax ~cmax =
+and piter ~fmax ~tmax ~cmax ~lmax = function
+  | RSum(l, r) -> Seq.append
+    (Seq.map (fun e -> MLeft e) (fiter ~fmax ~tmax ~cmax ~lmax l))
+    (Seq.map (fun e -> MRight e) (fiter ~fmax ~tmax ~cmax ~lmax r))
+  | RProd [] -> Seq.return (MTuple [])
+  | RProd((x, t) :: ts) ->
+    Seq.flat_map begin fun p ->
+      let phis = let MTuple phis = p in phis in
+      Seq.map (fun phi -> MTuple((x, phi) :: phis))
+        (fiter ~fmax ~tmax ~cmax ~lmax t)
+    end (piter ~fmax ~tmax ~cmax ~lmax (RProd ts))
+  | RLst t ->
+    let ephis = fiter ~fmax ~tmax ~cmax ~lmax t in
+    let lphis = Seq.cons (Match MNil) (fiter ~fmax ~tmax ~cmax (RLst t)) in
+    let cons = Seq.flat_map begin fun ephis ->
+      let phi, ephis = let Seq.Cons(h, t) = ephis () in h, t in
+      let cons phis phi = Match(MCons(phi, phis)) in
+      Seq.map (fun lphi -> MCons(phi, Seq.fold_left cons lphi ephis)) lphis
+    end (expand ~s:1 ~n:lmax (fun n -> product (repeat ~n ephis))) in
+    Seq.cons MNil cons
+  | Refine(t, phi) -> piter ~fmax ~tmax ~cmax ~lmax t
+  | RVoid -> assert false
+
+let riter ~dmax ~pmax ~fmax ~tmax ~cmax ~lmax =
   let rec riter depth =
     (* FIX: disabled ORs in nested types *)
     let fmax = if depth = dmax then fmax else 1 in
@@ -76,7 +103,7 @@ let riter ~dmax ~pmax ~fmax ~tmax ~cmax =
     ; Seq.map (fun t -> RLst t) last
     ; Seq.flat_map begin fun t ->
         Seq.map (fun phi -> Refine(t, phi))
-          (fiter ~fmax ~tmax ~cmax t)
+          (fiter ~fmax ~tmax ~cmax ~lmax t)
       end last
     ]) in
   let prev, last = riter dmax in
