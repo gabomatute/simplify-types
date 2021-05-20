@@ -35,23 +35,23 @@ let expand ?s ~n f =
 
 (* Grammar enumeration *)
 
-let cinit ~cmax =
+let citer ~cmax =
   Seq.range ~s:1 cmax
   
-let ninit ~tmax ~cmax t : number Seq.t =
-  let rec linit ?(s = []) t = match t with
+let niter ~tmax ~cmax t : number Seq.t =
+  let rec liter ?(s = []) t = match t with
     | RSum(l, r) -> Seq.empty
     | RProd ts -> let ts = List.to_seq ts in
-      Seq.flat_map (fun (n, t) -> linit ~s:(n :: s) t) ts
+      Seq.flat_map (fun (n, t) -> liter ~s:(n :: s) t) ts
     | RLst t -> Seq.return (path s)
-    | Refine(t, phi) -> linit ~s t
+    | Refine(t, phi) -> liter ~s t
     | RVoid -> assert false in
-  let terms = cross (linit t) (cinit ~cmax) in
+  let terms = cross (liter t) (citer ~cmax) in
   Seq.map (fun l -> (0, Seq.to_list l))
     (expand ~n:tmax (fun k -> choose terms k))
 
-let finit ~fmax ~tmax ~cmax t =
-  let ns = ninit ~tmax ~cmax t in
+let fiter ~fmax ~tmax ~cmax t =
+  let ns = niter ~tmax ~cmax t in
   let leqs = cross ns ns in
   Seq.map begin fun l -> match l () with
     | Seq.Cons((l, r), leqs) ->
@@ -60,13 +60,13 @@ let finit ~fmax ~tmax ~cmax t =
     | Seq.Nil -> True
   end (expand ~n:fmax (fun k -> choose leqs k))
 
-let rinit ~dmax ~pmax ~fmax ~tmax ~cmax =
-  let rec rinit depth =
+let riter ~dmax ~pmax ~fmax ~tmax ~cmax =
+  let rec riter depth =
     (* FIX: disabled ORs in nested types *)
     let fmax = if depth = dmax then fmax else 1 in
     if depth = 0 then Seq.empty, Seq.return (RProd []) else
     let name = List.mapi (fun i t -> (string_of_int i, t)) in
-    let prev, last = rinit (depth - 1) in
+    let prev, last = riter (depth - 1) in
     (Seq.append prev last, Seq.concat [
       Seq.map (fun (l, r) -> RSum(l, r))
         (Seq.concat [cross prev last; cross last prev; cross last last])
@@ -76,24 +76,24 @@ let rinit ~dmax ~pmax ~fmax ~tmax ~cmax =
     ; Seq.map (fun t -> RLst t) last
     ; Seq.flat_map begin fun t ->
         Seq.map (fun phi -> Refine(t, phi))
-          (finit ~fmax ~tmax ~cmax t)
+          (fiter ~fmax ~tmax ~cmax t)
       end last
     ]) in
-  let prev, last = rinit dmax in
+  let prev, last = riter dmax in
   Seq.append prev last
 
-let rec einit ~lmax t = match t with
+let rec eiter ~lmax t = match t with
     | Sum(l, r) -> Seq.append
-      (Seq.map (fun e -> L(e, r)) (einit ~lmax l))
-      (Seq.map (fun e -> R(l, e)) (einit ~lmax r))
+      (Seq.map (fun e -> L(e, r)) (eiter ~lmax l))
+      (Seq.map (fun e -> R(l, e)) (eiter ~lmax r))
     | Prod [] -> Seq.return (Tuple [])
     | Prod((x, t) :: ts) ->
       Seq.flat_map begin fun e ->
         let es = let Tuple es = e in es in
-        Seq.map (fun e -> Tuple((x, e) :: es)) (einit ~lmax t)
-      end (einit ~lmax (Prod ts))
+        Seq.map (fun e -> Tuple((x, e) :: es)) (eiter ~lmax t)
+      end (eiter ~lmax (Prod ts))
     | Lst t ->
-      let es = einit ~lmax t in
+      let es = eiter ~lmax t in
       Seq.map (fun l -> Ls(t, Seq.to_list l))
         (expand ~n:lmax (fun n -> product (repeat ~n es)))
     | Void -> assert false

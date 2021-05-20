@@ -11,10 +11,10 @@ open Unparse
 let setting name v =
   print_endline (name ^ ": " ^ string_of_int v); v
 
-let einit = einit
+let eiter = eiter
   ~lmax:(setting "List unroll factor" 3)
 
-let rinit () = rinit
+let riter () = riter
   ~dmax:(setting "Max type depth" 3)
   ~pmax:(setting "Max record size" 2)
   ~fmax:(setting "Max # constraints" 2)
@@ -78,7 +78,7 @@ let validate rt iv t = try
       if try not (rcheck output rt) with err ->
         show (Error "Check exception") ~rt ~output (); raise err then
       raise (Counter(input, output))
-    end (einit t)
+    end (eiter t)
   with
     | Counter(input, output) as err ->
       show (Error "Counter example") ~rt ~t ~iv ~input ~output ();
@@ -110,7 +110,7 @@ let repl () =
 
 let () = match Sys.argv with
   | [| prog; "-i" |] -> repl ()
-  | [| prog; "-e" |] -> Seq.iter crunch (rinit ())
+  | [| prog; "-e" |] -> Seq.iter crunch (riter ())
   | [| prog |] -> List.iter showcase examples
   | _ -> let prog = Sys.argv.(0) in
     print_endline ("help: " ^ prog ^ "[ -i | -e ]")
