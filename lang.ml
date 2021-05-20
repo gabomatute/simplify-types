@@ -122,7 +122,7 @@ let rec ssyn ?(vars = []) e =
   | Cons(e, es) ->
     let t = ssyn ~vars e in
     let t' = let Lst t = ssyn ~vars es in t in
-    if t = t' then t else raise IllTyped
+    if t = t' then Lst t else raise IllTyped
   | Map((n, f), e) ->
     let t = let Lst t = ssyn ~vars e in t in
     Lst(ssyn ~vars:((n, t) :: vars) f)
