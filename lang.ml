@@ -69,6 +69,22 @@ let rec path ?(p = Val) = function
   | [] -> p
 
 
+(* type translation *)
+
+let rec bare = function
+  | RVoid -> Void
+  | RSum(l, r) -> Sum(bare l, bare r)
+  | RProd ts -> Prod(List.map (fun (n, t) -> (n, bare t)) ts)
+  | RLst t -> Lst(bare t)
+  | Refine(t, phi) -> bare t
+
+let rec to_r = function
+  | Void -> RVoid
+  | Sum(l, r) -> RSum(to_r l, to_r r)
+  | Prod ts -> RProd(List.map (fun (n, t) -> (n, to_r t)) ts)
+  | Lst t -> RLst(to_r t)
+
+
 (* type operators *)
 
 let power t n =
@@ -81,14 +97,6 @@ let rec log (Prod ts) = match ts with
     let (let*) = Option.bind in
     let* t, i = log (Prod ts) in
     if t' = t then Some(t, i + 1) else None
-
-let rec bare = function
-  | RVoid -> Void
-  | RSum(l, r) -> Sum(bare l, bare r)
-  | RProd ts -> Prod(List.map (fun (n, t) -> (n, bare t)) ts)
-  | RLst t -> Lst(bare t)
-  | Refine(t, phi) -> bare t
-
 
 (* type synthesis and evaluation *)
 
