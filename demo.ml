@@ -12,7 +12,7 @@ let setting name v =
   print_endline (name ^ ": " ^ string_of_int v); v
 
 let eiter = eiter
-  ~lmax:(setting "List unroll factor" 3)
+  ~lmax:(setting "Max list length" 3)
 
 let riter () = riter
   ~dmax:(setting "Max type depth" 3)

@@ -1,4 +1,4 @@
-List unroll factor: 3
+Max list length: 3
 refine = <>
 simple = <>
 i(val) = val
