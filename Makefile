@@ -1,6 +1,6 @@
 # Compiler config
 ocamlc ?= ocamlopt
-flags ?= -g -w -8
+flags ?= -w -8
 
 ifeq ($(ocamlc), ocamlopt)
 	obj = cmx
