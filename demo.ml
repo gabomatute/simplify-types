@@ -43,6 +43,10 @@ let examples =
   ; "{ <a:[<>], b:[<>], c:[<>]> | 5len val.a <= 2len val.b + 3len val.c}"
   ; "{ { <a:[<>], b:[<>]> | len val.a <= len val.b} | len val.b <= len val.a}"
   ; "{ <a:[<>], b:[<>], c:[<>]> | len val.a <= len val.b V len val.a <= len val.c }"
+  ; "{ <> + <> | match(Left T) }"
+  ; "{ <> + <> | match(Right T) }"
+  ; "{ <a: <>, b: <>> | match(<a ~ T, b ~ T>) }"
+  ; "{ <> + <> | match(Left T) V match(Right T) }"
   ]
 
 (* Helpers *)

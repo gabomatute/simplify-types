@@ -126,3 +126,23 @@ i(val) = Case val of
     >
 Validated!
 
+refine = { <> + <> | match(Left T) }
+simple = <>
+i(val) = Left val
+Validated!
+
+refine = { <> + <> | match(Right T) }
+simple = <>
+i(val) = Right val
+Validated!
+
+refine = { <a:<>, b:<>> | match(<a ~ T, b ~ T>) }
+simple = <a:<>, b:<>>
+i(val) = val
+Validated!
+
+refine = { <> + <> | match(Left T) V match(Right T) }
+simple = <> + <>
+i(val) = val
+Validated!
+
