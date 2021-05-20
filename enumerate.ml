@@ -102,8 +102,10 @@ let riter ~dmax ~pmax ~fmax ~tmax ~cmax ~lmax =
           (Seq.skip 1 (product (repeat ~n (List.to_seq [prev; last]))))))
     ; Seq.map (fun t -> RLst t) last
     ; Seq.flat_map begin fun t ->
+        (* FIX: disabled pattern matching with nested refinements *)
+        let lmax = if to_r (bare t) = t then Some lmax else None in
         Seq.map (fun phi -> Refine(t, phi))
-          (fiter ~fmax ~tmax ~cmax ~lmax t)
+          (fiter ~fmax ~tmax ~cmax ?lmax t)
       end last
     ]) in
   let prev, last = riter dmax in
