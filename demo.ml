@@ -99,7 +99,7 @@ let showcase input =
 let c = ref 0
 let crunch rt =
   let iv, t = simplify rt in
-  if (incr c; !c) mod 1000000 = 0 then
+  if (incr c; !c) mod 100000 = 0 then
     show (Ok(Some(string_of_int !c))) ~rt ~t ~iv ();
   validate rt iv t
 

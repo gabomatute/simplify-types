@@ -52,7 +52,7 @@ let niter ~tmax ~cmax t : number Seq.t =
 
 let rec fiter ~fmax ~tmax ~cmax ?lmax t =
   let ns = niter ~tmax ~cmax t in
-  let leqs = Seq.map (fun (l, r) -> LEq(l, r)) (cross ns ns) in
+  let leqs = Seq.map (fun (l, r) -> LEq(l, r)) (Seq.skip 1 (cross ns ns)) in
   let matchs = match lmax with
     | Some lmax -> Seq.map (fun p -> Match p) (piter ~fmax ~tmax ~cmax ~lmax t)
     | None -> Seq.empty in
@@ -68,7 +68,10 @@ and piter ~fmax ~tmax ~cmax ~lmax = function
   | RSum(l, r) -> Seq.append
     (Seq.map (fun e -> MLeft e) (fiter ~fmax ~tmax ~cmax ~lmax l))
     (Seq.map (fun e -> MRight e) (fiter ~fmax ~tmax ~cmax ~lmax r))
-  | RProd [] -> Seq.return (MTuple [])
+  | RProd [] -> Seq.empty
+  | RProd [x, t] ->
+    Seq.map (fun phi -> MTuple([x, phi]))
+      (fiter ~fmax ~tmax ~cmax ~lmax t)
   | RProd((x, t) :: ts) ->
     Seq.flat_map begin fun p ->
       let phis = let MTuple phis = p in phis in
