@@ -17,7 +17,7 @@ let rec sexp ?(d = 1) st =
   | V n -> (n : string)
   | L(e, t) -> "Left " ^ sexp ~d st e
   | R(t, e) -> "Right " ^ sexp ~d st e
-  | Case(e, l, r) -> let c, d = d, d + 1 in
+  | Case(e, l, r) -> let c, d = d + 1, d + 2 in
     let sb t (n, e) = br c ^ t ^ " " ^ n ^ " -> " ^ sexp ~d st e in
     "Case " ^ sexp ~d st e ^ " of " ^ sb "Left" l ^ ";" ^ sb "Right" r
   | Tuple [] -> "<>" (* don't indent *)
