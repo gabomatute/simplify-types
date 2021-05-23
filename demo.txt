@@ -1,44 +1,4 @@
 Max list length: 3
-refine = <>
-simple = <>
-i(val) = val
-Validated!
-
-refine = <> + <>
-simple = <> + <>
-i(val) = val
-Validated!
-
-refine = [<>]
-simple = [<>]
-i(val) = val
-Validated!
-
-refine = <a:<>>
-simple = <a:<>>
-i(val) = val
-Validated!
-
-refine = <a:<> + <>>
-simple = <a:<> + <>>
-i(val) = val
-Validated!
-
-refine = <a:[<>]>
-simple = <a:[<>]>
-i(val) = val
-Validated!
-
-refine = { <> | T }
-simple = <>
-i(val) = val
-Validated!
-
-refine = <a:[<>], b:[<>]>
-simple = <a:[<>], b:[<>]>
-i(val) = val
-Validated!
-
 refine = { <a:[<>]> | 0 <= len val.a }
 simple = <a:[<>]>
 i(val) = val
@@ -85,21 +45,13 @@ i(val) = <
   >
 Validated!
 
-refine = { <a:[<>], b:[<>], c:[<>]> | 2len val.a + 3len val.b <= 5len val.c }
-simple = <a:<0:[<α:<1:<>, 2:<>, 3:<>, 4:<>, 5:<>>, β:<1:<>, 2:<>>>]>, b:<0:[<α:<1:<>, 2:<>, 3:<>, 4:<>, 5:<>>, β:<1:<>, 2:<>, 3:<>>>]>, c:[<>]>
+refine = { <a:[<>], b:[<>], c:[<>], d:[<>]> | len val.a + 2len val.b <= 3len val.c + len val.d }
+simple = <a:<0:[<α:<1:<>, 2:<>, 3:<>>, β:<>>], 1:[<α:<>, β:<>>]>, b:<0:[<α:<1:<>, 2:<>, 3:<>>, β:<1:<>, 2:<>>>], 1:[<α:<>, β:<1:<>, 2:<>>>]>, c:[<>], d:[<>]>
 i(val) = <
-    a = flatten_5 map (λx. proj_{α} x) proj_{0} proj_{a} val,
-    b = flatten_5 map (λx. proj_{α} x) proj_{0} proj_{b} val,
-    c = flatten_2 map (λx. proj_{β} x) proj_{0} proj_{a} val ++ flatten_3 map (λx. proj_{β} x) proj_{0} proj_{b} val ++ proj_{c} val
-  >
-Validated!
-
-refine = { <a:[<>], b:[<>], c:[<>]> | 5len val.a <= 2len val.b + 3len val.c }
-simple = <a:<0:[<α:<1:<>, 2:<>>, β:<1:<>, 2:<>, 3:<>, 4:<>, 5:<>>>], 1:[<α:<1:<>, 2:<>, 3:<>>, β:<1:<>, 2:<>, 3:<>, 4:<>, 5:<>>>]>, b:[<>], c:[<>]>
-i(val) = <
-    a = flatten_2 map (λx. proj_{α} x) proj_{0} proj_{a} val ++ flatten_3 map (λx. proj_{α} x) proj_{1} proj_{a} val,
-    b = flatten_5 map (λx. proj_{β} x) proj_{0} proj_{a} val ++ proj_{b} val,
-    c = flatten_5 map (λx. proj_{β} x) proj_{1} proj_{a} val ++ proj_{c} val
+    a = flatten_3 map (λx. proj_{α} x) proj_{0} proj_{a} val ++ map (λx. proj_{α} x) proj_{1} proj_{a} val,
+    b = flatten_3 map (λx. proj_{α} x) proj_{0} proj_{b} val ++ map (λx. proj_{α} x) proj_{1} proj_{b} val,
+    c = map (λx. proj_{β} x) proj_{0} proj_{a} val ++ flatten_2 map (λx. proj_{β} x) proj_{0} proj_{b} val ++ proj_{c} val,
+    d = map (λx. proj_{β} x) proj_{1} proj_{a} val ++ flatten_2 map (λx. proj_{β} x) proj_{1} proj_{b} val ++ proj_{d} val
   >
 Validated!
 
@@ -111,19 +63,26 @@ i(val) = <
   >
 Validated!
 
-refine = { <a:[<>], b:[<>], c:[<>]> | len val.a <= len val.b V len val.a <= len val.c }
-simple = <a:<0:[<α:<>, β:<>>]>, b:[<>], c:[<>]> + <a:<0:[<α:<>, β:<>>]>, b:[<>], c:[<>]>
+refine = { { { <a:[<>], b:[<>], c:[<>]> | len val.a <= len val.b } | len val.b <= len val.c } | len val.c <= len val.a }
+simple = <a:<0:<0:[<α:<α:<>, β:<>>, β:<>>]>>, b:<0:<>>, c:<>>
+i(val) = <
+    a = map (λx. proj_{α} x) map (λx. proj_{α} x) proj_{0} proj_{0} proj_{a} val,
+    b = map (λx. proj_{β} x) map (λx. proj_{α} x) proj_{0} proj_{0} proj_{a} val ++ map (λx. proj_{α} x) [],
+    c = map (λx. proj_{β} x) proj_{0} proj_{0} proj_{a} val ++ map (λx. proj_{β} x) []
+  >
+Validated!
+
+refine = { <a:[<>], b:[<>]> | len val.a <= len val.b V len val.b <= len val.a }
+simple = <a:<0:[<α:<>, β:<>>]>, b:[<>]> + <a:[<>], b:<0:[<α:<>, β:<>>]>>
 i(val) = Case val of 
-  Left x1 -> <
-      a = map (λx. proj_{α} x) proj_{0} proj_{a} x1,
-      b = map (λx. proj_{β} x) proj_{0} proj_{a} x1 ++ proj_{b} x1,
-      c = proj_{c} x1
-    >;
-  Right x2 -> <
-      a = map (λx. proj_{α} x) proj_{0} proj_{a} x2,
-      b = proj_{b} x2,
-      c = map (λx. proj_{β} x) proj_{0} proj_{a} x2 ++ proj_{c} x2
-    >
+    Left x1 -> <
+        a = map (λx. proj_{α} x) proj_{0} proj_{a} x1,
+        b = map (λx. proj_{β} x) proj_{0} proj_{a} x1 ++ proj_{b} x1
+      >;
+    Right x2 -> <
+        a = map (λx. proj_{β} x) proj_{0} proj_{b} x2 ++ proj_{a} x2,
+        b = map (λx. proj_{α} x) proj_{0} proj_{b} x2
+      >
 Validated!
 
 refine = { <> + <> | match(Left T) }
@@ -131,18 +90,36 @@ simple = <>
 i(val) = Left val
 Validated!
 
-refine = { <> + <> | match(Right T) }
-simple = <>
-i(val) = Right val
-Validated!
-
-refine = { <a:<>, b:<>> | match(<a ~ T, b ~ T>) }
-simple = <a:<>, b:<>>
+refine = { <> + <> | match(Left T) V match(Right T) }
+simple = <> + <>
 i(val) = val
 Validated!
 
 refine = { <> + <> | match(Left T) V match(Right T) }
 simple = <> + <>
 i(val) = val
+Validated!
+
+refine = { [<>] | match([]) }
+simple = <>
+i(val) = []
+Validated!
+
+refine = { [<>] | match(T :: T) }
+simple = <hd:<>, tl:[<>]>
+i(val) = <>::proj_{tl} val
+Validated!
+
+refine = { [<> + <>] | match(match(Left T) :: match([])) }
+simple = <hd:<>, tl:<>>
+i(val) = Left <>::[]
+Validated!
+
+refine = { [<a:[<>], b:[<>]>] | match(len val.a <= len val.b :: len val <= 0) }
+simple = <hd:<a:<0:[<α:<>, β:<>>]>, b:[<>]>, tl:<>>
+i(val) = <
+    a = map (λx. proj_{α} x) proj_{0} proj_{a} proj_{hd} val,
+    b = map (λx. proj_{β} x) proj_{0} proj_{a} proj_{hd} val ++ proj_{b} proj_{hd} val
+  >::[]
 Validated!
 

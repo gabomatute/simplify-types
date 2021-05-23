@@ -25,30 +25,25 @@ let riter () = riter
 
 (* Examples *)
 
-let examples =
-  [ "<>"
-  ; "<> + <>"
-  ; "[<>]"
-  ; "<a:<>>"
-  ; "<a:<> + <>>"
-  ; "<a:[<>]>"
-  ; "{ <> | T }"
-  ; "<a:[<>], b:[<>]>"
-  ; "{ <a:[<>]> | 0 <= len val.a }"
-  ; "{ <a:[<>]> | len val.a <= 0 }"
-  ; "{ <a:[<>], b:[<>]> | len val.a <= len val.b}"
-  ; "{ <a:[<>], b:[<>]> | 2len val.a <= 3len val.b}"
-  ; "{ <a:[<>], b:[<>], c:[<>]> | len val.a + len val.b <= len val.c}"
-  ; "{ <a:[<>], b:[<>], c:[<>]> | len val.a <= len val.b + len val.c}"
-  ; "{ <a:[<>], b:[<>], c:[<>]> | 2len val.a + 3len val.b <= 5len val.c}"
-  ; "{ <a:[<>], b:[<>], c:[<>]> | 5len val.a <= 2len val.b + 3len val.c}"
-  ; "{ { <a:[<>], b:[<>]> | len val.a <= len val.b} | len val.b <= len val.a}"
-  ; "{ <a:[<>], b:[<>], c:[<>]> | len val.a <= len val.b V len val.a <= len val.c }"
-  ; "{ <> + <> | match(Left T) }"
-  ; "{ <> + <> | match(Right T) }"
-  ; "{ <a: <>, b: <>> | match(<a ~ T, b ~ T>) }"
-  ; "{ <> + <> | match(Left T) V match(Right T) }"
-  ]
+let examples =[
+  "{ <a:[<>]> | 0 <= len val.a }";
+  "{ <a:[<>]> | len val.a <= 0 }";
+  "{ <a:[<>], b:[<>]> | len val.a <= len val.b}";
+  "{ <a:[<>], b:[<>]> | 2len val.a <= 3len val.b}";
+  "{ <a:[<>], b:[<>], c:[<>]> | len val.a + len val.b <= len val.c}";
+  "{ <a:[<>], b:[<>], c:[<>]> | len val.a <= len val.b + len val.c}";
+  "{ <a:[<>], b:[<>], c:[<>], d:[<>]> | len val.a + 2len val.b <= 3len val.c + len val.d}";
+  "{{ <a:[<>], b:[<>]> | len val.a <= len val.b} | len val.b <= len val.a }";
+  "{{{ <a:[<>], b:[<>], c:[<>]> | len val.a <= len val.b } | len val.b <= len val.c } | len val.c <= len val.a }";
+  "{ <a:[<>], b:[<>]> | len val.a <= len val.b V len val.b <= len val.a }";
+  "{ <> + <> | match(Left T) }";
+  "{ <> + <> | match(Left T) V match(Right T) }";
+  "{ <> + <> | match(Left T) V match(Right T) }";
+  "{ [<>] | match([]) }";
+  "{ [<>] | match(T :: T) }";
+  "{ [<> + <>] | match(match(Left T) :: match([])) }";
+  "{ [<a:[<>], b:[<>]>] | match(len val.a <= len val.b :: len val <= 0) }";
+]
 
 (* Helpers *)
 
