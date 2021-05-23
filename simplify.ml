@@ -69,14 +69,13 @@ let rec ebuild pe ?(p = Val) ~v t =
   match List.assoc_opt p pe with
     | Some e -> e
     | None -> match t with
-      | RSum _ | RLst _ -> v
-      | RProd nts ->
+      | Sum _ | Lst _ -> v
+      | Prod nts ->
         let ebuild (n, t) =
           let p, v = Dot(p, n), Proj(n, v) in
             (n, ebuild pe ~p ~v t) in
         Tuple(List.map ebuild nts)
-      | Refine(t, phi) -> ebuild pe ~p ~v t
-      | RVoid -> assert false
+      | Void -> assert false
 
 let rec simplify = function
   | RSum(rt1, rt2) ->
@@ -176,7 +175,7 @@ let rec simplify = function
           end nu) @ [proj qv v])
       end nv in
     let t' = twith (List.combine pu tu @ List.combine qv tv) t in
-    let i' v = ebuild (List.combine pu (epu v) @ List.combine qv (eqv v)) ~v rt in
+    let i' v = ebuild (List.combine pu (epu v) @ List.combine qv (eqv v)) ~v t in
     (i' >> i, t')
   | Refine(_, False) | RVoid ->
     let i v = assert false in
