@@ -155,7 +155,7 @@ let rec simplify = function
       | [] -> Ls(t, []) in
     let epu v =
       List.map begin fun (pu, cu) ->
-        let tu = let Lst t = tselect (bare rt) pu in t in
+        let tu = let Lst t = tselect t pu in t in
         concat tu (List.mapi begin fun i (qv, dv) ->
             let luv'cu = lcm cu dv / cu in
             let extract = Proj(string_of_int i, proj pu v) in
@@ -166,7 +166,7 @@ let rec simplify = function
       end nu in
     let eqv v =
       List.mapi begin fun i (qv, dv) ->
-        let tv = let Lst t = tselect (bare rt) qv in t in
+        let tv = let Lst t = tselect t qv in t in
         concat tv ((List.map begin fun (pu, cu) ->
             let luv'dv = lcm cu dv / dv in
             let extract = Proj(string_of_int i, proj pu v) in
