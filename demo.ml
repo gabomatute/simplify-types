@@ -104,6 +104,9 @@ let repl () =
   try while true do showcase (read ()) done with
     | End_of_file -> ()
 
+
+(* Main *)
+
 let () = match Sys.argv with
   | [| prog; "-i" |] -> repl ()
   | [| prog; "-e" |] -> Seq.iter crunch (riter ())
