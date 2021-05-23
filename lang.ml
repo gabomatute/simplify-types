@@ -185,9 +185,9 @@ let rec eval ?(vars = []) e =
 
 let rec ncompute e ((c, n): number) =
   let rec len ?(e = e) = function
-    | Dot(p, x) -> let Tuple es = e in len ~e:(List.assoc x es) p
-    | Val -> let Ls(t, l) = e in List.length l in
-  c + List.fold_left (fun acc (p, c) -> acc + c * len p) 0 n
+    | x::s -> let Tuple es = e in len ~e:(List.assoc x es) s
+    | [] -> let Ls(t, l) = e in List.length l in
+  c + List.fold_left (fun acc (p, c) -> acc + c * len (stack p)) 0 n
 
 let rec fcheck e = function
   | False -> false | True -> true
